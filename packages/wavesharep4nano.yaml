@@ -1,0 +1,19 @@
+substitutions:
+  # The branch the components and the fonts come from: main, or dev for a screen of the app's dev channel, which
+  # writes GITHUB_REF into the screen's own YAML next to the `ref:` of this package (docs/RELEASING.md, "Testing dev").
+  GITHUB_REF: "dev"
+  FONT_DIR: "https://raw.githubusercontent.com/MaxGramser/homeassistant_espscreen/${GITHUB_REF}/fonts"
+
+packages:
+  core: !include core.yaml
+  board: !include boards/wavesharep4nano.yaml
+  hotspot: !include features/hotspot.yaml
+
+external_components:
+  - source:
+      type: git
+      url: https://github.com/slx-io/homeassistant_espscreen.git
+      ref: ${GITHUB_REF}
+      path: components
+    refresh: 0s
+    components: [panel_i2c_enable, smart_display]
