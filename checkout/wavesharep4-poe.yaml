@@ -1,0 +1,27 @@
+substitutions:
+  FONT_DIR: "../fonts"
+
+packages:
+  core: !include ../packages/core.yaml
+  board: !include ../packages/boards/wavesharep4-poe.yaml
+  hotspot: !include ../packages/features/hotspot.yaml
+
+external_components:
+  - source:
+      type: local
+      path: ../components
+    components: [panel_i2c_enable, smart_display]
+
+api:
+  encryption:
+    key: !secret api_encryption_key
+
+ota:
+  - platform: esphome
+    encryption:
+    
+wifi:
+  enable_on_boot: false
+  ap:
+    ssid: "Tessera ${DEVICE_FRIENDLY_NAME}"
+    password: !secret ap_password
