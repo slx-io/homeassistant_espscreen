@@ -217,7 +217,8 @@
       "color": "Color",
       "color_temperature": "Color temperature",
       "brightness": "Brightness",
-      "waiting": "Waiting..."
+      "waiting": "Waiting...",
+      "presets": "Presets"
     },
     "effects": {
       "effect": "Effect",
@@ -1043,7 +1044,9 @@
         },
         "light": {
           "toggle": "On/off switch",
-          "brightness": "Brightness slider"
+          "brightness": "Brightness slider",
+          "presets": "Presets",
+          "brightness_presets": "Brightness slider and presets"
         },
         "fan": {
           "toggle": "On/off switch",
@@ -2101,6 +2104,29 @@
         "room_hint": "The screen draws them where the tile has room for them (firmware 0.57.0 or newer): under the name on a single tile, beside it on a double-width one. Where they don't fit, the tile looks as it does without them.",
         "tilt": "Slat tilt",
         "tilt_hint": "Adds the supported slat slider or tilt buttons when there is enough room. On smaller tiles, use the detail view. Your open/close selection stays unchanged."
+      },
+      "presets": {
+        "label": "Presets",
+        "preset": "Preset {n}",
+        "swatch_aria": "Preset {n}, brightness {b}%",
+        "white": "White",
+        "colour": "Color",
+        "level": "Brightness only",
+        "white_shade": "White shade",
+        "kelvin": "{k} K",
+        "hue": "Hue",
+        "degrees": "{h}°",
+        "saturation": "Saturation",
+        "brightness": "Brightness",
+        "percent": "{n}%",
+        "use_light": "Use the light's current state",
+        "use_light_off": "Turn the light on to take its brightness and color.",
+        "add": "Add a preset",
+        "add_first": "Add your first preset",
+        "levels": "Show brightness on presets",
+        "levels_hint": "Writes each preset's brightness small in its circle. A preset of brightness only always shows it.",
+        "hint": "A tap on a preset sets the light to it in one go; the ring marks the one the light shows. Click one to change it, drag to reorder.",
+        "hint_empty": "Up to four round keys, like the favorite colors in Home Assistant, each with its own brightness. A new one starts from what the light shows now."
       },
       "tap": {
         "label": "On tap",

@@ -17949,6 +17949,28 @@
 }
 },
 {
+"expect": "presets",
+"kind": "resolve",
+"tile": {
+"entity": "light.case",
+"options": {
+"controls": "presets",
+"size": "single"
+}
+}
+},
+{
+"expect": null,
+"kind": "resolve",
+"tile": {
+"entity": "light.case",
+"options": {
+"controls": "brightness_presets",
+"size": "single"
+}
+}
+},
+{
 "expect": null,
 "kind": "resolve",
 "tile": {
@@ -18014,6 +18036,28 @@
 }
 },
 {
+"expect": "presets",
+"kind": "resolve",
+"tile": {
+"entity": "light.case",
+"options": {
+"controls": "presets",
+"size": "wide"
+}
+}
+},
+{
+"expect": "presets",
+"kind": "resolve",
+"tile": {
+"entity": "light.case",
+"options": {
+"controls": "brightness_presets",
+"size": "wide"
+}
+}
+},
+{
 "expect": null,
 "kind": "resolve",
 "tile": {
@@ -18079,6 +18123,28 @@
 }
 },
 {
+"expect": "presets",
+"kind": "resolve",
+"tile": {
+"entity": "light.case",
+"options": {
+"controls": "presets",
+"size": "tall"
+}
+}
+},
+{
+"expect": "brightness_presets",
+"kind": "resolve",
+"tile": {
+"entity": "light.case",
+"options": {
+"controls": "brightness_presets",
+"size": "tall"
+}
+}
+},
+{
 "expect": null,
 "kind": "resolve",
 "tile": {
@@ -18139,6 +18205,28 @@
 "entity": "light.case",
 "options": {
 "controls": "brightness",
+"size": "square"
+}
+}
+},
+{
+"expect": "presets",
+"kind": "resolve",
+"tile": {
+"entity": "light.case",
+"options": {
+"controls": "presets",
+"size": "square"
+}
+}
+},
+{
+"expect": "brightness_presets",
+"kind": "resolve",
+"tile": {
+"entity": "light.case",
+"options": {
+"controls": "brightness_presets",
 "size": "square"
 }
 }
@@ -18204,6 +18292,28 @@
 "entity": "light.case",
 "options": {
 "controls": "brightness",
+"size": "full"
+}
+}
+},
+{
+"expect": "presets",
+"kind": "resolve",
+"tile": {
+"entity": "light.case",
+"options": {
+"controls": "presets",
+"size": "full"
+}
+}
+},
+{
+"expect": "brightness_presets",
+"kind": "resolve",
+"tile": {
+"entity": "light.case",
+"options": {
+"controls": "brightness_presets",
 "size": "full"
 }
 }
@@ -18269,6 +18379,28 @@
 "entity": "light.case",
 "options": {
 "controls": "brightness",
+"size": "1x1"
+}
+}
+},
+{
+"expect": "presets",
+"kind": "resolve",
+"tile": {
+"entity": "light.case",
+"options": {
+"controls": "presets",
+"size": "1x1"
+}
+}
+},
+{
+"expect": null,
+"kind": "resolve",
+"tile": {
+"entity": "light.case",
+"options": {
+"controls": "brightness_presets",
 "size": "1x1"
 }
 }
@@ -18334,6 +18466,28 @@
 "entity": "light.case",
 "options": {
 "controls": "brightness",
+"size": "1x3"
+}
+}
+},
+{
+"expect": "presets",
+"kind": "resolve",
+"tile": {
+"entity": "light.case",
+"options": {
+"controls": "presets",
+"size": "1x3"
+}
+}
+},
+{
+"expect": "brightness_presets",
+"kind": "resolve",
+"tile": {
+"entity": "light.case",
+"options": {
+"controls": "brightness_presets",
 "size": "1x3"
 }
 }
@@ -18399,6 +18553,28 @@
 "entity": "light.case",
 "options": {
 "controls": "brightness",
+"size": "3x1"
+}
+}
+},
+{
+"expect": "presets",
+"kind": "resolve",
+"tile": {
+"entity": "light.case",
+"options": {
+"controls": "presets",
+"size": "3x1"
+}
+}
+},
+{
+"expect": "presets",
+"kind": "resolve",
+"tile": {
+"entity": "light.case",
+"options": {
+"controls": "brightness_presets",
 "size": "3x1"
 }
 }
@@ -18464,6 +18640,28 @@
 "entity": "light.case",
 "options": {
 "controls": "brightness",
+"size": "2x3"
+}
+}
+},
+{
+"expect": "presets",
+"kind": "resolve",
+"tile": {
+"entity": "light.case",
+"options": {
+"controls": "presets",
+"size": "2x3"
+}
+}
+},
+{
+"expect": "brightness_presets",
+"kind": "resolve",
+"tile": {
+"entity": "light.case",
+"options": {
+"controls": "brightness_presets",
 "size": "2x3"
 }
 }
@@ -18529,6 +18727,28 @@
 "entity": "light.case",
 "options": {
 "controls": "brightness",
+"size": "3x2"
+}
+}
+},
+{
+"expect": "presets",
+"kind": "resolve",
+"tile": {
+"entity": "light.case",
+"options": {
+"controls": "presets",
+"size": "3x2"
+}
+}
+},
+{
+"expect": "brightness_presets",
+"kind": "resolve",
+"tile": {
+"entity": "light.case",
+"options": {
+"controls": "brightness_presets",
 "size": "3x2"
 }
 }
@@ -19527,6 +19747,970 @@
 "domain": "light",
 "expect": "brightness",
 "key": "brightness",
+"kind": "roomless",
+"size": "3x2"
+},
+{
+"attributes": {},
+"domain": "light",
+"expect": "presets",
+"features": null,
+"key": "presets",
+"kind": "drawable"
+},
+{
+"attributes": {},
+"domain": "light",
+"expect": "brightness",
+"features": [],
+"key": "presets",
+"kind": "drawable"
+},
+{
+"attributes": {},
+"domain": "light",
+"expect": "brightness",
+"features": [
+"climate_range"
+],
+"key": "presets",
+"kind": "drawable"
+},
+{
+"attributes": {},
+"domain": "light",
+"expect": "brightness",
+"features": [
+"cover_rows"
+],
+"key": "presets",
+"kind": "drawable"
+},
+{
+"attributes": {},
+"domain": "light",
+"expect": "brightness",
+"features": [
+"media_rows"
+],
+"key": "presets",
+"kind": "drawable"
+},
+{
+"attributes": {
+"supported_features": 0
+},
+"domain": "light",
+"expect": "presets",
+"features": null,
+"key": "presets",
+"kind": "drawable"
+},
+{
+"attributes": {
+"supported_features": 0
+},
+"domain": "light",
+"expect": "brightness",
+"features": [],
+"key": "presets",
+"kind": "drawable"
+},
+{
+"attributes": {
+"supported_features": 0
+},
+"domain": "light",
+"expect": "brightness",
+"features": [
+"climate_range"
+],
+"key": "presets",
+"kind": "drawable"
+},
+{
+"attributes": {
+"supported_features": 0
+},
+"domain": "light",
+"expect": "brightness",
+"features": [
+"cover_rows"
+],
+"key": "presets",
+"kind": "drawable"
+},
+{
+"attributes": {
+"supported_features": 0
+},
+"domain": "light",
+"expect": "brightness",
+"features": [
+"media_rows"
+],
+"key": "presets",
+"kind": "drawable"
+},
+{
+"attributes": {
+"supported_features": 8388607
+},
+"domain": "light",
+"expect": "presets",
+"features": null,
+"key": "presets",
+"kind": "drawable"
+},
+{
+"attributes": {
+"supported_features": 8388607
+},
+"domain": "light",
+"expect": "brightness",
+"features": [],
+"key": "presets",
+"kind": "drawable"
+},
+{
+"attributes": {
+"supported_features": 8388607
+},
+"domain": "light",
+"expect": "brightness",
+"features": [
+"climate_range"
+],
+"key": "presets",
+"kind": "drawable"
+},
+{
+"attributes": {
+"supported_features": 8388607
+},
+"domain": "light",
+"expect": "brightness",
+"features": [
+"cover_rows"
+],
+"key": "presets",
+"kind": "drawable"
+},
+{
+"attributes": {
+"supported_features": 8388607
+},
+"domain": "light",
+"expect": "brightness",
+"features": [
+"media_rows"
+],
+"key": "presets",
+"kind": "drawable"
+},
+{
+"attributes": {
+"supported_features": 1,
+"temperature": 21
+},
+"domain": "light",
+"expect": "presets",
+"features": null,
+"key": "presets",
+"kind": "drawable"
+},
+{
+"attributes": {
+"supported_features": 1,
+"temperature": 21
+},
+"domain": "light",
+"expect": "brightness",
+"features": [],
+"key": "presets",
+"kind": "drawable"
+},
+{
+"attributes": {
+"supported_features": 1,
+"temperature": 21
+},
+"domain": "light",
+"expect": "brightness",
+"features": [
+"climate_range"
+],
+"key": "presets",
+"kind": "drawable"
+},
+{
+"attributes": {
+"supported_features": 1,
+"temperature": 21
+},
+"domain": "light",
+"expect": "brightness",
+"features": [
+"cover_rows"
+],
+"key": "presets",
+"kind": "drawable"
+},
+{
+"attributes": {
+"supported_features": 1,
+"temperature": 21
+},
+"domain": "light",
+"expect": "brightness",
+"features": [
+"media_rows"
+],
+"key": "presets",
+"kind": "drawable"
+},
+{
+"attributes": {
+"supported_features": 2,
+"target_temp_high": 23,
+"target_temp_low": 19
+},
+"domain": "light",
+"expect": "presets",
+"features": null,
+"key": "presets",
+"kind": "drawable"
+},
+{
+"attributes": {
+"supported_features": 2,
+"target_temp_high": 23,
+"target_temp_low": 19
+},
+"domain": "light",
+"expect": "brightness",
+"features": [],
+"key": "presets",
+"kind": "drawable"
+},
+{
+"attributes": {
+"supported_features": 2,
+"target_temp_high": 23,
+"target_temp_low": 19
+},
+"domain": "light",
+"expect": "brightness",
+"features": [
+"climate_range"
+],
+"key": "presets",
+"kind": "drawable"
+},
+{
+"attributes": {
+"supported_features": 2,
+"target_temp_high": 23,
+"target_temp_low": 19
+},
+"domain": "light",
+"expect": "brightness",
+"features": [
+"cover_rows"
+],
+"key": "presets",
+"kind": "drawable"
+},
+{
+"attributes": {
+"supported_features": 2,
+"target_temp_high": 23,
+"target_temp_low": 19
+},
+"domain": "light",
+"expect": "brightness",
+"features": [
+"media_rows"
+],
+"key": "presets",
+"kind": "drawable"
+},
+{
+"attributes": {
+"supported_features": 3,
+"target_temp_high": 23,
+"target_temp_low": 19,
+"temperature": null
+},
+"domain": "light",
+"expect": "presets",
+"features": null,
+"key": "presets",
+"kind": "drawable"
+},
+{
+"attributes": {
+"supported_features": 3,
+"target_temp_high": 23,
+"target_temp_low": 19,
+"temperature": null
+},
+"domain": "light",
+"expect": "brightness",
+"features": [],
+"key": "presets",
+"kind": "drawable"
+},
+{
+"attributes": {
+"supported_features": 3,
+"target_temp_high": 23,
+"target_temp_low": 19,
+"temperature": null
+},
+"domain": "light",
+"expect": "brightness",
+"features": [
+"climate_range"
+],
+"key": "presets",
+"kind": "drawable"
+},
+{
+"attributes": {
+"supported_features": 3,
+"target_temp_high": 23,
+"target_temp_low": 19,
+"temperature": null
+},
+"domain": "light",
+"expect": "brightness",
+"features": [
+"cover_rows"
+],
+"key": "presets",
+"kind": "drawable"
+},
+{
+"attributes": {
+"supported_features": 3,
+"target_temp_high": 23,
+"target_temp_low": 19,
+"temperature": null
+},
+"domain": "light",
+"expect": "brightness",
+"features": [
+"media_rows"
+],
+"key": "presets",
+"kind": "drawable"
+},
+{
+"attributes": {
+"supported_features": 8
+},
+"domain": "light",
+"expect": "presets",
+"features": null,
+"key": "presets",
+"kind": "drawable"
+},
+{
+"attributes": {
+"supported_features": 8
+},
+"domain": "light",
+"expect": "brightness",
+"features": [],
+"key": "presets",
+"kind": "drawable"
+},
+{
+"attributes": {
+"supported_features": 8
+},
+"domain": "light",
+"expect": "brightness",
+"features": [
+"climate_range"
+],
+"key": "presets",
+"kind": "drawable"
+},
+{
+"attributes": {
+"supported_features": 8
+},
+"domain": "light",
+"expect": "brightness",
+"features": [
+"cover_rows"
+],
+"key": "presets",
+"kind": "drawable"
+},
+{
+"attributes": {
+"supported_features": 8
+},
+"domain": "light",
+"expect": "brightness",
+"features": [
+"media_rows"
+],
+"key": "presets",
+"kind": "drawable"
+},
+{
+"domain": "light",
+"expect": "none",
+"key": "presets",
+"kind": "roomless",
+"size": "single"
+},
+{
+"domain": "light",
+"expect": "presets",
+"key": "presets",
+"kind": "roomless",
+"size": "wide"
+},
+{
+"domain": "light",
+"expect": "presets",
+"key": "presets",
+"kind": "roomless",
+"size": "tall"
+},
+{
+"domain": "light",
+"expect": "presets",
+"key": "presets",
+"kind": "roomless",
+"size": "square"
+},
+{
+"domain": "light",
+"expect": "presets",
+"key": "presets",
+"kind": "roomless",
+"size": "full"
+},
+{
+"domain": "light",
+"expect": "none",
+"key": "presets",
+"kind": "roomless",
+"size": "1x1"
+},
+{
+"domain": "light",
+"expect": "presets",
+"key": "presets",
+"kind": "roomless",
+"size": "1x3"
+},
+{
+"domain": "light",
+"expect": "presets",
+"key": "presets",
+"kind": "roomless",
+"size": "3x1"
+},
+{
+"domain": "light",
+"expect": "presets",
+"key": "presets",
+"kind": "roomless",
+"size": "2x3"
+},
+{
+"domain": "light",
+"expect": "presets",
+"key": "presets",
+"kind": "roomless",
+"size": "3x2"
+},
+{
+"attributes": {},
+"domain": "light",
+"expect": "brightness_presets",
+"features": null,
+"key": "brightness_presets",
+"kind": "drawable"
+},
+{
+"attributes": {},
+"domain": "light",
+"expect": "brightness",
+"features": [],
+"key": "brightness_presets",
+"kind": "drawable"
+},
+{
+"attributes": {},
+"domain": "light",
+"expect": "brightness",
+"features": [
+"climate_range"
+],
+"key": "brightness_presets",
+"kind": "drawable"
+},
+{
+"attributes": {},
+"domain": "light",
+"expect": "brightness",
+"features": [
+"cover_rows"
+],
+"key": "brightness_presets",
+"kind": "drawable"
+},
+{
+"attributes": {},
+"domain": "light",
+"expect": "brightness",
+"features": [
+"media_rows"
+],
+"key": "brightness_presets",
+"kind": "drawable"
+},
+{
+"attributes": {
+"supported_features": 0
+},
+"domain": "light",
+"expect": "brightness_presets",
+"features": null,
+"key": "brightness_presets",
+"kind": "drawable"
+},
+{
+"attributes": {
+"supported_features": 0
+},
+"domain": "light",
+"expect": "brightness",
+"features": [],
+"key": "brightness_presets",
+"kind": "drawable"
+},
+{
+"attributes": {
+"supported_features": 0
+},
+"domain": "light",
+"expect": "brightness",
+"features": [
+"climate_range"
+],
+"key": "brightness_presets",
+"kind": "drawable"
+},
+{
+"attributes": {
+"supported_features": 0
+},
+"domain": "light",
+"expect": "brightness",
+"features": [
+"cover_rows"
+],
+"key": "brightness_presets",
+"kind": "drawable"
+},
+{
+"attributes": {
+"supported_features": 0
+},
+"domain": "light",
+"expect": "brightness",
+"features": [
+"media_rows"
+],
+"key": "brightness_presets",
+"kind": "drawable"
+},
+{
+"attributes": {
+"supported_features": 8388607
+},
+"domain": "light",
+"expect": "brightness_presets",
+"features": null,
+"key": "brightness_presets",
+"kind": "drawable"
+},
+{
+"attributes": {
+"supported_features": 8388607
+},
+"domain": "light",
+"expect": "brightness",
+"features": [],
+"key": "brightness_presets",
+"kind": "drawable"
+},
+{
+"attributes": {
+"supported_features": 8388607
+},
+"domain": "light",
+"expect": "brightness",
+"features": [
+"climate_range"
+],
+"key": "brightness_presets",
+"kind": "drawable"
+},
+{
+"attributes": {
+"supported_features": 8388607
+},
+"domain": "light",
+"expect": "brightness",
+"features": [
+"cover_rows"
+],
+"key": "brightness_presets",
+"kind": "drawable"
+},
+{
+"attributes": {
+"supported_features": 8388607
+},
+"domain": "light",
+"expect": "brightness",
+"features": [
+"media_rows"
+],
+"key": "brightness_presets",
+"kind": "drawable"
+},
+{
+"attributes": {
+"supported_features": 1,
+"temperature": 21
+},
+"domain": "light",
+"expect": "brightness_presets",
+"features": null,
+"key": "brightness_presets",
+"kind": "drawable"
+},
+{
+"attributes": {
+"supported_features": 1,
+"temperature": 21
+},
+"domain": "light",
+"expect": "brightness",
+"features": [],
+"key": "brightness_presets",
+"kind": "drawable"
+},
+{
+"attributes": {
+"supported_features": 1,
+"temperature": 21
+},
+"domain": "light",
+"expect": "brightness",
+"features": [
+"climate_range"
+],
+"key": "brightness_presets",
+"kind": "drawable"
+},
+{
+"attributes": {
+"supported_features": 1,
+"temperature": 21
+},
+"domain": "light",
+"expect": "brightness",
+"features": [
+"cover_rows"
+],
+"key": "brightness_presets",
+"kind": "drawable"
+},
+{
+"attributes": {
+"supported_features": 1,
+"temperature": 21
+},
+"domain": "light",
+"expect": "brightness",
+"features": [
+"media_rows"
+],
+"key": "brightness_presets",
+"kind": "drawable"
+},
+{
+"attributes": {
+"supported_features": 2,
+"target_temp_high": 23,
+"target_temp_low": 19
+},
+"domain": "light",
+"expect": "brightness_presets",
+"features": null,
+"key": "brightness_presets",
+"kind": "drawable"
+},
+{
+"attributes": {
+"supported_features": 2,
+"target_temp_high": 23,
+"target_temp_low": 19
+},
+"domain": "light",
+"expect": "brightness",
+"features": [],
+"key": "brightness_presets",
+"kind": "drawable"
+},
+{
+"attributes": {
+"supported_features": 2,
+"target_temp_high": 23,
+"target_temp_low": 19
+},
+"domain": "light",
+"expect": "brightness",
+"features": [
+"climate_range"
+],
+"key": "brightness_presets",
+"kind": "drawable"
+},
+{
+"attributes": {
+"supported_features": 2,
+"target_temp_high": 23,
+"target_temp_low": 19
+},
+"domain": "light",
+"expect": "brightness",
+"features": [
+"cover_rows"
+],
+"key": "brightness_presets",
+"kind": "drawable"
+},
+{
+"attributes": {
+"supported_features": 2,
+"target_temp_high": 23,
+"target_temp_low": 19
+},
+"domain": "light",
+"expect": "brightness",
+"features": [
+"media_rows"
+],
+"key": "brightness_presets",
+"kind": "drawable"
+},
+{
+"attributes": {
+"supported_features": 3,
+"target_temp_high": 23,
+"target_temp_low": 19,
+"temperature": null
+},
+"domain": "light",
+"expect": "brightness_presets",
+"features": null,
+"key": "brightness_presets",
+"kind": "drawable"
+},
+{
+"attributes": {
+"supported_features": 3,
+"target_temp_high": 23,
+"target_temp_low": 19,
+"temperature": null
+},
+"domain": "light",
+"expect": "brightness",
+"features": [],
+"key": "brightness_presets",
+"kind": "drawable"
+},
+{
+"attributes": {
+"supported_features": 3,
+"target_temp_high": 23,
+"target_temp_low": 19,
+"temperature": null
+},
+"domain": "light",
+"expect": "brightness",
+"features": [
+"climate_range"
+],
+"key": "brightness_presets",
+"kind": "drawable"
+},
+{
+"attributes": {
+"supported_features": 3,
+"target_temp_high": 23,
+"target_temp_low": 19,
+"temperature": null
+},
+"domain": "light",
+"expect": "brightness",
+"features": [
+"cover_rows"
+],
+"key": "brightness_presets",
+"kind": "drawable"
+},
+{
+"attributes": {
+"supported_features": 3,
+"target_temp_high": 23,
+"target_temp_low": 19,
+"temperature": null
+},
+"domain": "light",
+"expect": "brightness",
+"features": [
+"media_rows"
+],
+"key": "brightness_presets",
+"kind": "drawable"
+},
+{
+"attributes": {
+"supported_features": 8
+},
+"domain": "light",
+"expect": "brightness_presets",
+"features": null,
+"key": "brightness_presets",
+"kind": "drawable"
+},
+{
+"attributes": {
+"supported_features": 8
+},
+"domain": "light",
+"expect": "brightness",
+"features": [],
+"key": "brightness_presets",
+"kind": "drawable"
+},
+{
+"attributes": {
+"supported_features": 8
+},
+"domain": "light",
+"expect": "brightness",
+"features": [
+"climate_range"
+],
+"key": "brightness_presets",
+"kind": "drawable"
+},
+{
+"attributes": {
+"supported_features": 8
+},
+"domain": "light",
+"expect": "brightness",
+"features": [
+"cover_rows"
+],
+"key": "brightness_presets",
+"kind": "drawable"
+},
+{
+"attributes": {
+"supported_features": 8
+},
+"domain": "light",
+"expect": "brightness",
+"features": [
+"media_rows"
+],
+"key": "brightness_presets",
+"kind": "drawable"
+},
+{
+"domain": "light",
+"expect": "brightness_presets",
+"key": "brightness_presets",
+"kind": "roomless",
+"size": "single"
+},
+{
+"domain": "light",
+"expect": "brightness_presets",
+"key": "brightness_presets",
+"kind": "roomless",
+"size": "wide"
+},
+{
+"domain": "light",
+"expect": "brightness_presets",
+"key": "brightness_presets",
+"kind": "roomless",
+"size": "tall"
+},
+{
+"domain": "light",
+"expect": "brightness_presets",
+"key": "brightness_presets",
+"kind": "roomless",
+"size": "square"
+},
+{
+"domain": "light",
+"expect": "brightness_presets",
+"key": "brightness_presets",
+"kind": "roomless",
+"size": "full"
+},
+{
+"domain": "light",
+"expect": "brightness_presets",
+"key": "brightness_presets",
+"kind": "roomless",
+"size": "1x1"
+},
+{
+"domain": "light",
+"expect": "brightness_presets",
+"key": "brightness_presets",
+"kind": "roomless",
+"size": "1x3"
+},
+{
+"domain": "light",
+"expect": "brightness_presets",
+"key": "brightness_presets",
+"kind": "roomless",
+"size": "3x1"
+},
+{
+"domain": "light",
+"expect": "brightness_presets",
+"key": "brightness_presets",
+"kind": "roomless",
+"size": "2x3"
+},
+{
+"domain": "light",
+"expect": "brightness_presets",
+"key": "brightness_presets",
 "kind": "roomless",
 "size": "3x2"
 },

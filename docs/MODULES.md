@@ -61,6 +61,10 @@ the add-on and the editor offer a module's options only on boards that have it.
 - **text_card** (full): the template tile, `screen.text` (docs/TEXT_TILE.md, `module_text_card.cpp` with its headers).
   Its screens say `text_card` in their hello, with `text_tiles` and `text_bytes` in their caps, and ESP Screens offers
   the tile and sends its rows (`md`) to those only; the editor offers it where `boards.json` lists the module.
+- **light_presets** (full): a light's presets, round keys on its tile and its card that set a colour or a white shade
+  and a brightness (docs/LIGHT_PRESETS.md, `module_light_presets.h`). Its screens say `light_presets` in their hello and
+  ESP Screens sends them the controls `presets` and `brightness_presets`; the editor offers them where `boards.json`
+  lists the module, and lite draws the brightness slider.
 - **doorbell** (full): a doorbell's ring (the event `esp_screens_doorbell`) opens its camera full screen, live with its
   sound and a chime (docs/DOORBELL.md, `module_doorbell.cpp` with its header). Its screens say `doorbell` in their hello
   when they stream (a P4), and ESP Screens sends them the op `doorbell`; every other screen gets the camera's alert.

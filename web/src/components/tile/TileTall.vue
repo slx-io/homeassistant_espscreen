@@ -12,6 +12,8 @@ import CoverTilePreview from "../CoverTilePreview.vue";
 import MarqueeText from "../MarqueeText.vue";
 import ModeBar from "../ModeBar.vue";
 import RangeChip from "./RangeChip.vue";
+import PresetDisc from "./PresetDisc.vue";
+import { levelShown } from "../../model/light-presets";
 
 const props = defineProps<{ card: TileCardView }>();
 // The same card for as long as this face stands (useTileCard): read without going through the props each time.
@@ -48,6 +50,11 @@ const standStyle = computed(() => ({ background: `linear-gradient(to top, ${card
       <ModeBar v-else-if="card.tallStyle.panel.kind === 'mode'" :a="card.current?.a || {}" :mode="card.current?.state || ''" :domain="card.domain" place="tall" :columns="card.shape.columns" />
       <span v-else-if="['setpoint', 'stepper'].includes(card.tallStyle.panel.kind) && !card.face.tallKeys.length" class="stp"><span class="mdi">{{ card.key("minus") || "−" }}</span><b>{{ card.face.thermostat ? card.texts.setpoint : card.texts.value }}</b><span class="mdi">{{ card.key("plus") || "+" }}</span></span>
       <span v-else-if="card.tallStyle.panel.kind === 'run'" class="run">{{ card.texts.runText }}</span>
+      <!-- A light's presets (module light_presets): their round keys, under its slider where both are chosen. -->
+      <template v-else-if="card.tallStyle.panel.dots">
+        <span v-if="card.tallStyle.panel.slider" class="range" :style="{ ...card.tallStyle.panel.slider, ...rangeStyle }"></span>
+        <PresetDisc v-for="dot in card.tallStyle.panel.dots" :key="dot.key" class="dot" :preset="dot.preset" :lit="dot.lit" :level="dot.level" :style="dot.style" />
+      </template>
       <template v-else-if="card.tallStyle.panel.keys">
         <span v-if="card.tallStyle.panel.slider" class="range" :style="{ ...card.tallStyle.panel.slider, ...rangeStyle }"></span>
         <span class="keys" :style="card.tallStyle.panel.keys"><span v-for="(control, i) in card.face.tallKeys" :key="i" class="key mdi"
@@ -103,6 +110,8 @@ const standStyle = computed(() => ({ background: `linear-gradient(to top, ${card
         <span v-else-if="card.face.tallControls === 'stepper'" class="stp"><span class="mdi">{{ card.key("minus") || "−" }}</span><b>{{ card.texts.value }}</b><span class="mdi">{{ card.key("plus") || "+" }}</span></span>
         <template v-else-if="card.face.tallControls === 'volume'"><span v-if="card.features & bits('media_player', 'VOLUME_SET')" class="range" :style="rangeStyle"></span><span v-if="card.features & bits('media_player', 'VOLUME_MUTE')" class="key mdi">{{ card.key(card.current?.a?.is_volume_muted ? 'volume-off' : 'volume-high') }}</span></template>
         <span v-else-if="card.face.tallControls === 'run'" class="run">{{ card.texts.runText }}</span>
+        <template v-else-if="['presets', 'brightness_presets'].includes(card.face.tallControls)"><PresetDisc v-for="(preset, i) in card.presets" :key="i" class="dot-loose"
+          :preset="preset" :lit="i === card.presetLit" :level="levelShown(preset, card.tile.options?.preset_levels === true)" /></template>
         <span v-else class="range" :style="rangeStyle"></span>
       </span>
     </template>
@@ -146,6 +155,8 @@ const standStyle = computed(() => ({ background: `linear-gradient(to top, ${card
 .tile .glass-tall .glass-row .stp { flex: 1; height: 100%; border-radius: 999px; }
 .tile .glass-tall .glass-row .run { height: 100%; border-radius: 999px; display: grid; place-items: center; flex: 1; }
 .tile .glass-tall .vol-glass { border-radius: 10px; }
+.tile .glass-tall .glass-row .dot { position: absolute; }
+.tile.tall .ctl .dot-loose { width: 22px; height: 22px; flex: none; font-size: 9px; }
 /* Over a player's cover (style_tall): light words, a dark circle, the play key white with a dark glyph. */
 .tile.tall.photo .glass-tall .nm, .tile.tall.photo .glass-tall .words, .tile.tall.photo .glass-tall .st { color: white; }
 .tile.tall.photo .glass-tall .ic:not(.thumb) { background: var(--camera-track); color: white; }

@@ -386,6 +386,38 @@ the video and the tiles half their pictures. The registers above are all the tes
 1600 x 1200 RAW8 table. The OV02C10 (the Guition) is the other road: its binning and skipping are in OmniVision's
 datasheet (table 3-1, above).
 
+**Done for the OV02C10 (Screen camera 0.6.5, 2026-10-27, measured on a Guition 10.1).** Full is the default: the
+1288x728 table's window opened to the whole array (0..1935 x 8..1087), the columns taken by pairs and averaged (0x3814
+0x03, 0x3815 0x01, 0x3820 0xa2, 0x4501 0x00), every line read: 960 x 1080 at 15 frames a second (VTS 2328). With the
+lines binned in the sensor too, every window tried stopped after one frame with a MIPI frame boundary error (0.6.3 and
+0.6.4), so the FrameHub halves the lines once on the PPA, 960 x 528 for every consumer; what that costs against Sharp
+is in CAMERA.md, "What travels". The FrameHub picks the frame rate too: 5 a second while nobody watches, full speed at
+once when someone does. Both go through the sensor driver's own calls (`camera_sensor.h` in Screen camera:
+`set_fps`, `field_format`, `field_report`), so the board file still names nothing of its sensor. Open: `hw::caps()`
+does not name the modes yet; esp_video's auto exposure keeps the longest exposure of the format the camera started
+in (Sharp's, about 32 ms, where Full's frame would allow twice that); and the halving waits its turn on the PPA behind
+the tiles and LVGL (up to 0.74 s measured).
+
+### 4.7 Open on the P4 (2026-10-27)
+
+- **LVGL's areas in blocks of 16 (`draw_rounding: 16`) are not in.** On a turned glass it leaves the PPA no thin strip
+  to turn, and 40 held top bars on a reTerminal D1001 froze it no more, but the guard (`ppa_guard.h`, a last unit the
+  size of the 2D-DMA's FIFO counts as a stall) did the same alone, and the watchdog on the PPA ring (`ppa_trace.h`)
+  restarts a screen within four seconds should a copy still never come back. The rounding's own first boot on the
+  D1001 met the heap assert below, about 50 s in; its cost was not measurable (the screen showed its camera tiles as
+  stills on the second run); no gain over the guard is proven. It stays out until one is.
+- **A heap assert when a picture task is deleted, once.** On that D1001 boot: `assert failed` in `tlsf_free` (TLSF's
+  "block already marked as free") from `prvTaskDeleteWithCaps`, `psram_task::reap`, `picture_fetch::tick()`, on the main
+  loop, right after live pictures had loaded. The free that failed is the task's stack, in PSRAM (the call before the
+  return address 0x48270e5e is `heap_caps_free(puxStackBuffer)`); the TCB is inside the chip, ESP-IDF 5.5.5's
+  `xTaskCreatePinnedToCoreWithCaps` takes it with `pvPortMalloc`. The picture tasks left at least 7.9 KB of their 10 KB
+  of stack unused, and the canary is on, so it is no overflow of their own. Suspects: a write past the end of the PSRAM
+  block in front of the stack (TLSF keeps a block's size, with its free bit, in the word right after the block before
+  it), or the stack freed twice. In the crashes the app kept of that D1001 since 2026-10-25 it never came before, and a
+  serial watch stays on it. To do after Screen camera 0.6.5: light heap poisoning (`CONFIG_HEAP_POISONING_LIGHT`) in a
+  test build, which names the block whose end was overwritten when it is freed, then an hour's soak on the D1001 and the
+  Guition 10.1. The same family once before: 2026-10-25, a stream buffer's control block in PSRAM (live_view.cpp).
+
 ## 5. The doorbell's talk-back, prepared
 
 Not built now: Home Assistant is expected to bring a two-way audio path of its own within months, and the community

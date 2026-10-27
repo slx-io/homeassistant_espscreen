@@ -217,7 +217,8 @@
       "color": "Colore",
       "color_temperature": "Temperatura colore",
       "brightness": "Luminosità",
-      "waiting": "In attesa..."
+      "waiting": "In attesa...",
+      "presets": "Preimpostazioni"
     },
     "effects": {
       "effect": "Effetto",
@@ -1043,7 +1044,9 @@
         },
         "light": {
           "toggle": "Interruttore acceso/spento",
-          "brightness": "Cursore della luminosità"
+          "brightness": "Cursore della luminosità",
+          "presets": "Preimpostazioni",
+          "brightness_presets": "Cursore luminosità e preimpostazioni"
         },
         "fan": {
           "toggle": "Interruttore acceso/spento",
@@ -2530,6 +2533,29 @@
         "room_hint": "Lo schermo li disegna dove il riquadro ha spazio (firmware 0.57.0 o successivo): sotto il nome su un riquadro singolo, accanto su uno a doppia larghezza. Dove non ci stanno, il riquadro resta com'è senza.",
         "tilt": "",
         "tilt_hint": ""
+      },
+      "presets": {
+        "label": "Preimpostazioni",
+        "preset": "Preimpostazione {n}",
+        "swatch_aria": "Preimpostazione {n}, luminosità {b}%",
+        "white": "Bianco",
+        "colour": "Colore",
+        "level": "Solo luminosità",
+        "white_shade": "Tonalità di bianco",
+        "kelvin": "{k} K",
+        "hue": "Tinta",
+        "degrees": "{h}°",
+        "saturation": "Saturazione",
+        "brightness": "Luminosità",
+        "percent": "{n}%",
+        "use_light": "Usa lo stato attuale della luce",
+        "use_light_off": "Accendi la luce per prendere la sua luminosità e il suo colore.",
+        "add": "Aggiungi una preimpostazione",
+        "add_first": "Aggiungi la prima preimpostazione",
+        "levels": "Mostra la luminosità sulle preimpostazioni",
+        "levels_hint": "Scrive la luminosità in piccolo in ogni cerchio. Una preimpostazione di sola luminosità la mostra sempre.",
+        "hint": "Un tocco su una preimpostazione regola la luce in un colpo; l'anello indica quella che la luce mostra. Fai clic su una per cambiarla, trascinala per cambiare l'ordine.",
+        "hint_empty": "Fino a quattro tasti rotondi, come i colori preferiti di Home Assistant, ognuno con la sua luminosità. Una nuova parte da ciò che la luce mostra ora."
       },
       "tap": {
         "label": "Al tocco",

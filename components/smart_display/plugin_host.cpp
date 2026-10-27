@@ -424,11 +424,11 @@ void wake(const Plugin *plugin) {
   if (plugin_host::wake) plugin_host::wake(std::string("plugin ") + (plugin ? plugin->plugin_id() : "?"));
 }
 
-// A plugin that uses the screen's own camera on the screen itself says so (0.17): the core's dot shows while one does
-// (capture_dot.h).
+// A plugin that uses the screen's own camera on the screen itself says so (0.17), watched or for sensing alone (0.20):
+// the core's dot shows while one does (capture_dot.h).
 void capturing(const Plugin *plugin, Capture what, bool on) {
-  if (what != Capture::CAMERA || !plugin) return;
-  capture_dot::capturing(plugin, on);
+  if (!plugin || (what != Capture::CAMERA && what != Capture::SENSING)) return;
+  capture_dot::capturing(plugin, what == Capture::SENSING, on);
 }
 
 int camera_turn() {

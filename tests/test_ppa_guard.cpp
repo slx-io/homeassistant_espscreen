@@ -107,6 +107,15 @@ int main() {
   // goes in two pieces the driver sets the bypass for.
   assert(stalls(block(300, 4, A270)) && !driver_bypasses(block(300, 4, A270)) && check(block(300, 4, A270), true) == 2);
 
+  // The top bar's hold line on a reTerminal D1001 (2026-10-27): a 6-row strip turned a quarter whose last unit is
+  // exactly the FIFO (6 x 16 x 16 bits). The hardware stalled on 336x6 and on 864x6, a piece of 872x6, so both go in
+  // pieces now, each one the engine takes whole, while the driver still counts such a block strictly and sets no bypass
+  // for it. 904x6 goes whole: the driver sets the bypass for it (904 % 64 = 8). 200x6 too (200 % 64 = 8).
+  assert(stalls(block(336, 6, A90)) && !driver_bypasses(block(336, 6, A90)));
+  assert(stalls(block(864, 6, A90)) && !driver_bypasses(block(864, 6, A90)));
+  for (uint32_t w : {336u, 864u, 872u, 528u, 1280u}) assert(check(block(w, 6, A90), true) >= 2);
+  assert(check(block(904, 6, A90), false) == 1 && check(block(200, 6, A90), false) == 1);
+
   // Unturned, the driver's rule is the hardware's: never a split, whatever the size.
   for (uint32_t w = 1; w <= 200; ++w)
     for (uint32_t h = 1; h <= 200; h += 3) {

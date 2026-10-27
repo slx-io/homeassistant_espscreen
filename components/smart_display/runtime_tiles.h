@@ -600,6 +600,10 @@ struct Widgets {
   // a slider or a toggle. Objects are rebuilt only when the control set changes.
   lv_obj_t *panel{}; std::string panel_mode; bool panel_dirty=false, panel_full=false, panel_tall=false; uint8_t panel_pair=0; int panel_w=0; uint16_t panel_layout_w=0,panel_layout_h=0;
   std::array<lv_obj_t *,3> keys{}, key_icons{}; std::array<int,3> key_commands{}; std::array<std::string,3> key_args; std::array<int,3> key_checked{};
+#ifdef SD_MOD_LIGHT_PRESETS
+  // A light's presets on its panel (module light_presets): a round key each, the presets they were made for and their size.
+  std::array<lv_obj_t *,light_presets::MAX> dots{}; const void *dots_of=nullptr; int dots_size=0;
+#endif
   // A thermostat's mode bar as its panel ("Mode", firmware 0.19.0): its segments, on the panel's track (pill).
   std::array<lv_obj_t *,climate_tile::SEGMENTS> segments{};
   lv_obj_t *pill{}, *pill_value{}, *knob{}, *control_slider{}; int knob_on=-1;
@@ -980,14 +984,14 @@ inline bool action(const std::string &service, const std::string &entity, const 
   return watched;
 }
 inline bool action_template(const std::string &service, const std::string &entity, const std::string &key, const std::string &value,
-                            bool busy = true);
+                            bool busy = true, const std::string &key2 = "", const std::string &value2 = "");
 // One wish's turn (docs/OPTIMISTIC.md): it goes out when it is ready, its old value comes back when Home Assistant
 // leaves it as it was, and a slow one says so. Run at a tap, at an answer, at a report and by the clock.
 inline void wish_run(optimistic::Wish &w, uint32_t now) {
   switch (optimistic::tick(w, now)) {
     case optimistic::Outcome::SEND:
-      optimistic::sent(w, w.rendered ? action_template(w.service, w.target, w.key, w.value, false)
-                                     : action(w.service, w.target, w.key, w.value, true, "", "", false));
+      optimistic::sent(w, w.rendered ? action_template(w.service, w.target, w.key, w.value, false, w.key2, w.value2)
+                                     : action(w.service, w.target, w.key, w.value, true, w.key2, w.value2, false));
       break;
     case optimistic::Outcome::REVERT: wish_revert(w, false, false); break;
     default:
@@ -1021,7 +1025,7 @@ inline void remote_key(const std::string &entity, const std::string &command) { 
 // travel as text (firmware 0.3.9+, the lamp page of a light group).
 // Returns whether Home Assistant will answer it; `busy` as for action().
 inline bool action_template(const std::string &service, const std::string &entity, const std::string &key, const std::string &value,
-                            bool busy) {
+                            bool busy, const std::string &key2, const std::string &value2) {
   if (!fresh() || !valid_entity(entity)) return false;
   esphome::api::HomeassistantActionRequest request;
   request.service = esphome::StringRef(service);
@@ -1030,11 +1034,17 @@ inline bool action_template(const std::string &service, const std::string &entit
   target.key = esphome::StringRef("entity_id");
   target.value = esphome::StringRef(entity);
   request.data.push_back(target);
-  request.data_template.init(1);
+  request.data_template.init(1 + !key2.empty());
   esphome::api::HomeassistantServiceMap entry;
   entry.key = esphome::StringRef(key);
   entry.value = esphome::StringRef(value);
   request.data_template.push_back(entry);
+  if (!key2.empty()) {
+    esphome::api::HomeassistantServiceMap second;
+    second.key = esphome::StringRef(key2);
+    second.value = esphome::StringRef(value2);
+    request.data_template.push_back(second);
+  }
   const bool watched = send_action(request, entity, true, busy);
   ESP_LOGI("runtime_action", "Sent service=%s entity=%s %s", service.c_str(), entity.c_str(), key.c_str());
   return watched;
@@ -1254,6 +1264,16 @@ inline const Lamp *wish_lamp(const Tile &t, const std::string &item) {
   for (const auto &l : t.extra().lamps) if (l.entity == item) return &l;
   return nullptr;
 }
+#ifdef SD_MOD_LIGHT_PRESETS
+// The light as its presets read it: on, its brightness in percent, and its white shade or its colour.
+inline light_presets::Light preset_light(const Tile &t) {
+  light_presets::Light l;
+  l.on = t.state == "on";
+  l.level = std::isfinite(t.brightness) ? std::clamp((int) std::lround(t.brightness * 100.0f / 255.0f), 1, 100) : 100;
+  l.white = t.white; l.kelvin = t.kelvin; l.hue = t.hue; l.saturation = t.saturation;
+  return l;
+}
+#endif
 inline std::string wish_read(const Tile &t, optimistic::Field field, const std::string &item = "") {
   using F = optimistic::Field;
   const auto &x = t.extra();
@@ -1284,6 +1304,14 @@ inline std::string wish_read(const Tile &t, optimistic::Field field, const std::
     case F::MUTED: return t.muted ? "1" : "0";
     case F::HUE: return std::to_string(t.saturation ? t.hue : 0);
     case F::KELVIN: return std::to_string(t.kelvin);
+    case F::PRESET: {
+#ifdef SD_MOD_LIGHT_PRESETS
+      const auto l = preset_light(t);
+      return light_presets::read(l, tile_controls::light_colour(t), light_presets::Preset::WHITE);
+#else
+      return {};
+#endif
+    }
   }
   return {};
 }
@@ -1328,8 +1356,19 @@ inline void wish_write(Tile &t, optimistic::Field field, const std::string &valu
     case F::SHUFFLE: t.edit_extra().media_shuffle = value.empty() ? -1 : value == "1" ? 1 : 0; break;
     case F::REPEAT: t.edit_extra().media_repeat = value; break;
     case F::MUTED: t.muted = value == "1"; break;
-    case F::HUE: t.hue = number; t.saturation = 100; t.has_hs_color = true; break;
-    case F::KELVIN: t.kelvin = number; t.saturation = 0; break;
+    case F::HUE: t.hue = number; t.saturation = 100; t.has_hs_color = true; t.white = false; break;
+    case F::KELVIN: t.kelvin = number; t.saturation = 0; t.white = true; break;
+    case F::PRESET: {
+#ifdef SD_MOD_LIGHT_PRESETS
+      // As Home Assistant reports it after light.turn_on: on at the brightness, in the white shade or the colour.
+      const auto p = light_presets::parse(value);
+      if (p.level == 0) { t.state = "off"; break; }
+      t.state = "on"; t.brightness = p.level * 255.0f / 100.0f;
+      if (p.kind == light_presets::Preset::WHITE) { t.kelvin = p.kelvin; t.saturation = 0; t.white = true; }
+      if (p.kind == light_presets::Preset::COLOUR) { t.hue = p.hue; t.saturation = p.saturation; t.has_hs_color = true; t.white = false; }
+#endif
+      break;
+    }
   }
 }
 // Every tile and the open card of the entity show `value`; drawn after the event that asked, whose key a redraw may delete.
@@ -1377,12 +1416,12 @@ inline void wish_watch(lv_timer_t *);
 // `rendered`: the action's value is one Home Assistant renders (a lamp's hs_color list).
 inline void wish(Tile &t, optimistic::Field field, const std::string &value, const std::string &service,
                  const std::string &key = "", const std::string &data = "", const std::string &target = "",
-                 const std::string &item = "", bool rendered = false) {
+                 const std::string &item = "", bool rendered = false, const std::string &key2 = "", const std::string &value2 = "") {
   if (!fresh() || !valid_entity(t.entity) || service.empty()) return;
   auto &w = wishes.slot(t.entity, field, item);
   optimistic::want(w, t.entity, !target.empty() ? target : !item.empty() ? item : t.entity, field, wish_read(t, field, item), value,
                    esphome::millis(), 0, item);
-  w.service = service; w.key = key; w.value = data; w.rendered = rendered;
+  w.service = service; w.key = key; w.value = data; w.rendered = rendered; w.key2 = key2; w.value2 = value2;
   for (size_t i = 0; i < model.count; ++i) if (model.tiles[i].entity == t.entity) { model.tiles[i].refused_at = 0; model.tiles[i].unanswered = false; }
   ESP_LOGI("wish", "%s%s%s: '%s' (was '%s')", t.entity.c_str(), item.empty() ? "" : " ", item.c_str(), value.c_str(), w.before.c_str());
   wish_show(t.entity, field, value, item);
@@ -1420,6 +1459,16 @@ inline bool toggle_tap(const Tile &t, const std::string &service) {
   const auto d = t.domain();
   return service == d + ".toggle" && (d == "light" || d == "switch" || d == "input_boolean" || d == "fan" || d == "automation" || d == "remote");
 }
+#ifdef SD_MOD_LIGHT_PRESETS
+// A preset's key: the light to its brightness and its white shade or colour at once, shown on every tile and the open card
+// of the light before Home Assistant answers (Field::PRESET), as one light.turn_on whose values Home Assistant renders.
+inline void preset_wish(Tile &t, const light_presets::Preset &p) {
+  if (t.domain() != "light" || !t.available() || p.level == 0) return;
+  const auto colour = light_presets::colour_data(p);
+  wish(t, optimistic::Field::PRESET, light_presets::value(p), "light.turn_on", "brightness_pct", std::to_string(p.level), "", "", true,
+       colour.key2, colour.value2);
+}
+#endif
 inline void toggle_wish(Tile &t) {
   const bool on = t.state != "on";
   wish(t, optimistic::Field::ON_OFF, on ? "on" : "off", t.domain() + (on ? ".turn_on" : ".turn_off"));
@@ -3162,9 +3211,23 @@ inline void light_icon_paint(lv_obj_t *glyph,const Tile &t,const CardPart &part)
                                                           :(on?tile_controls::accent(t):theme::hex(theme::ICON_OFF))));
 }
 inline void light_value_paint(lv_obj_t *value,const Tile &t,const CardPart &){label(value,light_value_text(t));}
+#ifdef SD_MOD_LIGHT_PRESETS
+// A light's presets, drawn by module_light_presets.cpp (a compilation unit of its own): a tile's panel, the colour card's
+// row or column and the dimming card's row (docs/LIGHT_PRESETS.md).
+struct PanelMetrics;
+int preset_panel(Widgets &w, const Tile &t, const PanelMetrics &m, bool taller, int content_w, int content_h, int fill, int &panel_h);
+void colour_presets_paint(const Tile &t);
+int colour_column();
+bool colour_beside();
+void colour_presets_draw(lv_obj_t *card, bool beside, int top, int bottom, int y);
+void light_card_presets(const Tile &t, int x, int y, int width, int height, bool left);
+#endif
 // What decides the light card's parts: whether it dims. On and off, the level and the colour are painted.
 inline uint32_t light_card_shape(const Tile &t){
   Fingerprint f;f.add(t.entity);f.write('|');f.write(tile_controls::light_dims(t)?'d':'s');
+#ifdef SD_MOD_LIGHT_PRESETS
+  f.write(t.presets?(char)('0'+t.presets->count):'-');
+#endif
   return f.value;
 }
 inline void render_light_detail(Tile &t,bool large,int width,int height,int columns) {
@@ -3174,7 +3237,13 @@ inline void render_light_detail(Tile &t,bool large,int width,int height,int colu
   const lv_font_t *icons=tile_icon_font();
   const auto m=light_metrics(large);
   const bool dims=tile_controls::light_dims(t);
-  const auto l=light_card::layout(m,width,height,columns,dims);
+  int presets_h=0;
+#ifdef SD_MOD_LIGHT_PRESETS
+  // A light's presets (module light_presets): a row under it all, or under the value where the card stands in two columns.
+  const bool presets=t.domain()=="light"&&dims&&t.presets&&t.presets->count;
+  if(presets)presets_h=light_presets::card_key();
+#endif
+  const auto l=light_card::layout(m,width,height,columns,dims,presets_h);
   detail_placed=true;   // the layout has already put every part where the glass has room for it
   // The big value says what the state line would have said, so the card draws no second one.
   if(detail_status){lv_obj_add_flag(detail_status,LV_OBJ_FLAG_HIDDEN);detail_status=nullptr;}
@@ -3217,6 +3286,9 @@ inline void render_light_detail(Tile &t,bool large,int width,int height,int colu
   if(!l.caption.empty()&&dims&&t.domain()=="light")
     detail_text(detail_root,tr(txt::light_brightness),l.caption.x,l.caption.y,l.caption.w,text,
                 l.columns==2?LV_TEXT_ALIGN_LEFT:LV_TEXT_ALIGN_CENTER,theme::hex(theme::SUBTLE));
+#ifdef SD_MOD_LIGHT_PRESETS
+  if(presets&&!l.presets.empty())light_card_presets(t,l.presets.x,l.presets.y,l.presets.w,l.presets.h,l.columns==2);
+#endif
   card_shaped(t,light_card_shape);
 }
 // ---- Climate card (firmware 0.2.80): one computed card on every board ----
@@ -5874,6 +5946,12 @@ inline void colour_commits() {
     if (i >= 0) commit_slider(static_cast<unsigned>(i), light_controls::clamp(percent, 1, 100) * 10);
   };
 }
+#ifdef SD_MOD_LIGHT_PRESETS
+// The colour card's presets (module light_presets, module_light_presets.cpp draws them): the light's tile's, kept while
+// the card is open, and their keys.
+inline std::shared_ptr<const light_presets::Presets> colour_presets;
+inline std::array<lv_obj_t *, light_presets::MAX> colour_dots{};
+#endif
 // The card drawn anew, for `title` with the values `v`: the page under it covers the glass and takes every press, so
 // nothing leaks through to the tiles and the page keys (firmware 0.2.82); the card inside keeps a hand's width and
 // stands in the middle, like every other card.
@@ -5891,6 +5969,21 @@ inline void colour_draw(const std::string &title, const light_controls::Values &
   lv_obj_set_height(card, lv_pct(100));
   lv_obj_remove_flag(card, LV_OBJ_FLAG_SCROLLABLE);
   overlay_card::frame(card, overlay_card::controls);
+  int rows_width = overlay_card::content_width();
+#ifdef SD_MOD_LIGHT_PRESETS
+  // The presets beside the rows take a column at their right, the card as much wider as the glass has room for; else a
+  // fourth row the three share the room with.
+  const bool beside = !light_controls::demo && colour_beside();
+  light_controls::extra = !light_controls::demo && colour_presets && colour_presets->count && !beside ? 1 : 0;
+  if (beside) {
+    const int column = colour_column() + ui::px(ui::large() ? 12 : 5);
+    const int whole = std::min(overlay_card::screen_width(), rows_width + column);
+    rows_width = whole - column;
+    const int side = (overlay_card::screen_width() - whole) / 2;
+    lv_obj_set_style_pad_left(card, side, 0);
+    lv_obj_set_style_pad_right(card, side, 0);
+  }
+#endif
   // Every page's top bar (detail_bar): the back key, the name, and at the right the sparkles key and the lamps key,
   // where the light has effects or modes on its device (a WLED's palette, preset, speed) or is a group with lamps.
   colour_bar = detail_bar::make(card, title, {detail_bar::BACK, colour_back}, {"\U000F0674", colour_effects}, {"\U000F1253", colour_lamps});
@@ -5899,19 +5992,39 @@ inline void colour_draw(const std::string &title, const light_controls::Values &
   shown(colour_bar.right[1], group_page::offered(colour_entity));
   if (light_controls::demo) lv_obj_add_flag(colour_bar.back, LV_OBJ_FLAG_HIDDEN);
   detail_bar::place(card, colour_bar);
-  light_controls::setup(card, small_font, overlay_card::content_width(), overlay_card::screen_height(), mini_icon_font);
+  light_controls::setup(card, small_font, rows_width, overlay_card::screen_height(), mini_icon_font);
   colour_commits();
-  light_controls::place(v);
+  const int below = light_controls::place(v);
   light_controls::paint(v, true);
+#ifdef SD_MOD_LIGHT_PRESETS
+  if (!light_controls::demo) {
+    // The rows' block: from the first that shows to the end of the last.
+    int top = below;
+    // Read from the styles place() set: the coordinates follow only at LVGL's next layout pass.
+    for (auto &row : light_controls::rows)
+      if (row.box && !lv_obj_has_flag(row.box, LV_OBJ_FLAG_HIDDEN)) top = std::min(top, (int) lv_obj_get_style_y(row.box, LV_PART_MAIN));
+    colour_presets_draw(card, beside, top, below - light_controls::row_gap, below);
+    const int i = colour_index();
+    if (i >= 0) colour_presets_paint(model.tiles[i]);
+  }
+#else
+  (void) below;
+#endif
   lv_obj_move_foreground(colour_root);
 }
 inline void colour_open(Tile &t) {
   colour_entity = t.entity;
+#ifdef SD_MOD_LIGHT_PRESETS
+  colour_presets = t.presets;
+#endif
   colour_draw(t.name.empty() ? t.entity : t.name, colour_values(t));
 }
 inline void colour_close() {
   if (colour_root) { lv_obj_delete(colour_root); colour_root = nullptr; light_controls::forget(); }
   colour_entity.clear();
+#ifdef SD_MOD_LIGHT_PRESETS
+  colour_presets.reset(); colour_dots.fill(nullptr);
+#endif
 }
 // A new state of the light while its card is open: the sliders follow it, one under a finger is left alone. A light that
 // gained or lost a colour mode is laid out again, unless a finger is on the card.
@@ -5924,6 +6037,9 @@ inline void colour_updated(const Tile &t) {
     return;
   }
   light_controls::paint(v, false);
+#ifdef SD_MOD_LIGHT_PRESETS
+  colour_presets_paint(t);
+#endif
 }
 // A change of look while the card is open: drawn again in place.
 inline void colour_restyle() {
@@ -7444,6 +7560,9 @@ inline void end_panel(Widgets &w) {
   if(!w.panel_mode.empty()){
     lv_obj_clean(w.panel);w.keys.fill(nullptr);w.key_icons.fill(nullptr);w.key_checked.fill(-1);w.segments.fill(nullptr);
     w.pill=w.pill_value=w.knob=w.control_slider=nullptr;w.knob_on=-1;w.panel_mode.clear();
+#ifdef SD_MOD_LIGHT_PRESETS
+    w.dots.fill(nullptr);w.dots_of=nullptr;w.dots_size=0;
+#endif
   }
 }
 inline void control_event(lv_event_t *e);
@@ -7536,209 +7655,8 @@ inline void stepper_keys(Widgets &w,int width,int height,const lv_font_t *text_f
 // `standing`: the height of a player's volume standing at the right of its card (volume_playback on a card wider than
 // high, render_tall draws it among the card's parts): the panel holds the keys alone; -1 the keys alone, without room
 // for the volume; 0 lays the volume over the keys.
-inline int layout_panel(Widgets &w,const Tile &t,bool large,int content_w,int content_h,int standing=0) {
-  std::string mode=tile_controls::panel_kind(t);
-  // A full card that draws its setpoint and mode keys as rows (render_tall) takes the taller card's control sizes.
-  const bool taller=t.row_span()>1 && (!w.full || tile_controls::climate_modes_selected(t));
-  // A full-page card fills the glass whatever the grid under it, so its keys follow the room the card has on the glass:
-  // large keys once its content runs 56 mm along its longer side, the way the keys stand in a row. Before (firmware
-  // 0.35.0) the height of one cell decided, so more rows chosen (a 10.1-inch with eight) gave the whole page the small
-  // keys. Every board keeps what it had: the CYD's card (at most 51 mm) the small keys, every other the large.
-  PanelMetrics m=w.full?panel_metrics_full(std::max(content_w,content_h)>=ui::mm(56)):panel_metrics(large);
-  if(taller){
-    m.key_h=std::max(ui::touch_min(),ui::px(large?48:34));m.key_w=m.key_h;
-    if(t.domain()=="media_player"){m.key_h=media_tall_key(m.key_h,content_h);m.key_w=m.key_h;}
-    m.pill_w=std::min(content_w,ui::control_max_width());m.pill_key=m.key_h;
-    m.slider_h=m.key_h;m.toggle_h=m.key_h;m.ext=0;
-    if(mode=="toggle"){
-      const auto toggle=tall_tile::toggle(content_w,m.toggle_h);
-      if(toggle.empty()){hide_panel(w);return 0;}
-      m.toggle_w=toggle.w;
-    }
-    m.slider_w=std::max(ui::touch_min(),m.pill_w-m.key_h-m.gap);
-    // A resized panel is rebuilt once, not on each live state update.
-    if(w.panel_layout_w!=content_w||w.panel_layout_h!=content_h){end_panel(w);w.panel_mode.clear();}
-    w.panel_layout_w=content_w;w.panel_layout_h=content_h;
-  }
-  const int knob_pad=taller?ui::px(large?4:3):4;
-  const lv_font_t *icon_font=w.full?w.icon_font:mini_icon_font?mini_icon_font:w.icon_font;
-  const lv_font_t *text_font=control_font?control_font:w.title_font;
-  auto d=t.domain();
-  // A wide card's controls fill every cell after its first (rest_content_width); a card over the whole page
-  // keeps the wide sizes of panel_metrics_full, centred under it. A row of keys divides that room between three
-  // of them, and never takes a key above the size the look gives it.
-  // A full card's sizes are the look's, but its glass can be narrower than they are (a small screen standing up):
-  // every width stays inside the card, and a key never below the touch minimum.
-  if(w.full){
-    m.pill_w=std::min(m.pill_w,content_w);
-    m.slider_w=std::min(m.slider_w,std::max(ui::touch_min(),content_w-m.key_h-m.gap));
-    m.toggle_w=std::min(m.toggle_w,content_w);
-  }
-  const int fill=(w.full||taller)?m.pill_w:rest_content_width(w);
-  // That room follows the card's width (GitHub #250): a slot that showed a card of another width builds its parts again,
-  // as a taller card does when it is resized.
-  if(!w.full&&!taller){
-    if(w.panel_layout_w!=fill){end_panel(w);w.panel_mode.clear();}
-    w.panel_layout_w=fill;w.panel_layout_h=0;
-  }
-  const int keys_room=w.full?content_w:fill;
-  const int key_w=std::min(m.key_w,std::max(ui::touch_min(),(keys_room-2*m.gap)/3));
-  // A player's volume shares that room with its mute key; every other slider takes it whole.
-  const int track=(w.full||taller)?(mode=="volume"?m.slider_w:m.pill_w):(mode=="volume"?std::max(ui::touch_min(),fill-m.gap-m.key_h):fill);
-  // A player's volume over its playback keys (volume_playback) on a taller card: one panel, the slider a row above.
-  const bool pair=taller&&mode=="playback"&&tile_controls::media_volume_selected(t);
-  const int pair_w=pair?std::max(3*key_w+2*m.gap,m.pill_w):0;
-  // 1: the volume over the keys, 2: standing at the card's right, 3: no room for it, the keys alone.
-  const uint8_t pair_form=!pair?0:standing>0?2:standing<0?3:1;
-  auto make_slider=[&](int width,int h){
-    auto *slider=lv_slider_create(w.panel);w.control_slider=slider;
-    lv_obj_remove_flag(slider,LV_OBJ_FLAG_GESTURE_BUBBLE);lv_obj_remove_flag(slider,LV_OBJ_FLAG_SCROLLABLE);
-    lv_obj_set_size(slider,width,h);
-    lv_obj_set_style_pad_all(slider,0,LV_PART_MAIN);
-    lv_obj_set_style_bg_opa(slider,LV_OPA_COVER,LV_PART_MAIN);lv_obj_set_style_bg_opa(slider,LV_OPA_COVER,LV_PART_INDICATOR);
-    // The handle is a short white bar inside the fill, like Home Assistant's slider.
-    lv_obj_set_style_radius(slider,2,LV_PART_KNOB);lv_obj_add_style(slider,theme::style(theme::Paint::knob),LV_PART_KNOB);lv_obj_set_style_bg_opa(slider,LV_OPA_COVER,LV_PART_KNOB);
-    slider_handle(slider,width,h);
-    lv_obj_set_style_border_width(slider,0,LV_PART_KNOB);lv_obj_set_style_shadow_width(slider,0,LV_PART_KNOB);
-    lv_obj_set_ext_click_area(slider,m.ext+2);
-    lv_obj_add_event_cb(slider,slider_event,LV_EVENT_ALL,(void*)(uintptr_t)w.index);
-  };
-  if(!w.panel){w.panel=panel_obj(w.tile,false);}
-  if(w.panel_mode!=mode || w.panel_full!=w.full || w.panel_tall!=taller || w.panel_pair!=pair_form){
-    end_panel(w);w.panel_mode=mode;w.panel_full=w.full;w.panel_tall=taller;w.panel_pair=pair_form;w.panel_dirty=true;
-    if(tile_controls::is_key_row(mode)){
-      for(unsigned n=0;n<3;++n){panel_key(w,n,w.panel,m,key_w,m.key_h,false);panel_icon(w,n,icon_font);}
-      // Standing at the card's right (form 2), the volume is one of the card's own parts (render_tall, media_standing).
-      if(pair_form==1)make_slider(pair_w,m.slider_h);
-    }else if(mode=="mode"){
-      // Drawn per render (draw_mode_bar): the track and a segment per mode, as many as its width holds.
-    }else if(mode=="setpoint"||mode=="stepper"){
-      w.pill=panel_obj(w.panel,false);lv_obj_set_size(w.pill,fill,m.key_h+2);
-      lv_obj_set_style_radius(w.pill,LV_RADIUS_CIRCLE,0);lv_obj_set_style_bg_opa(w.pill,LV_OPA_COVER,0);
-      panel_key(w,0,w.pill,m,m.pill_key,m.key_h+2,true);panel_icon(w,0,icon_font);lv_label_set_text(w.key_icons[0],tile_controls::glyph::MINUS);
-      panel_key(w,1,w.pill,m,m.pill_key,m.key_h+2,true);panel_icon(w,1,icon_font);lv_label_set_text(w.key_icons[1],tile_controls::glyph::PLUS);
-      // Holding -/+ keeps stepping (LVGL repeats while pressed); one call goes out after the finger rests.
-      for(unsigned n=0;n<2;++n)lv_obj_add_event_cb(w.keys[n],control_event,LV_EVENT_LONG_PRESSED_REPEAT,(void*)(uintptr_t)((&w-widgets.data())*16+n));
-      lv_obj_set_pos(w.keys[0],0,0);lv_obj_set_pos(w.keys[1],fill-m.pill_key,0);
-      w.pill_value=lv_label_create(w.pill);lv_obj_remove_flag(w.pill_value,LV_OBJ_FLAG_CLICKABLE);
-      lv_obj_set_style_text_font(w.pill_value,text_font,0);lv_obj_set_style_text_align(w.pill_value,LV_TEXT_ALIGN_CENTER,0);
-      lv_label_set_long_mode(w.pill_value,LV_LABEL_LONG_CLIP);
-      // A thermostat's range (firmware 0.19.0): in the number's place the end the -/+ move, its heat or cool icon before
-      // the temperature, on the pill as a single temperature stands there; a tap switches it and lights it up while
-      // the finger is down. The third key of the panel, on the panel above the pill, so the pill's own children stay.
-      if(t.domain()=="climate"){
-        panel_key(w,2,w.panel,m,m.pill_key,m.key_h,true);panel_icon(w,2,icon_font);
-        auto *value=lv_label_create(w.keys[2]);lv_obj_remove_flag(value,LV_OBJ_FLAG_CLICKABLE);
-        set_color(w.keys[2],LV_STYLE_BG_COLOR,theme::color(theme::STEPPER_KEY),LV_STATE_PRESSED);
-        lv_obj_add_flag(w.keys[2],LV_OBJ_FLAG_HIDDEN);
-      }
-      lv_obj_set_size(w.pill_value,std::max(1,fill-2*m.pill_key),lv_font_get_line_height(text_font));
-      lv_obj_set_pos(w.pill_value,m.pill_key,(m.key_h+2-lv_font_get_line_height(text_font))/2);
-      w.key_commands[0]=tile_controls::STEP_DOWN;w.key_commands[1]=tile_controls::STEP_UP;
-    }else if(tile_controls::is_slider(mode)){
-      make_slider(track,m.slider_h);
-      if(mode=="volume"){panel_key(w,0,w.panel,m,m.key_h,m.key_h,false);panel_icon(w,0,icon_font);w.key_commands[0]=tile_controls::MEDIA_MUTE;}
-    }else if(mode=="toggle"){
-      panel_key(w,0,w.panel,m,m.toggle_w,m.toggle_h,false);lv_obj_set_style_radius(w.keys[0],LV_RADIUS_CIRCLE,0);
-      w.knob=panel_obj(w.keys[0],false);lv_obj_set_size(w.knob,m.toggle_h-2*knob_pad,m.toggle_h-2*knob_pad);lv_obj_set_y(w.knob,knob_pad);
-      lv_obj_set_style_radius(w.knob,LV_RADIUS_CIRCLE,0);lv_obj_set_style_bg_opa(w.knob,LV_OPA_COVER,0);lv_obj_add_style(w.knob,theme::style(theme::Paint::knob),0);
-      w.key_commands[0]=tile_controls::TOGGLE;
-    }else if(mode=="run"){
-      const char *text=tile_controls::run_label(d);
-      lv_point_t size;lv_text_get_size(&size,text,text_font,0,0,LV_COORD_MAX,LV_TEXT_FLAG_EXPAND);
-      panel_key(w,0,w.panel,m,std::max(m.key_w*3/2,(int)size.x+2*m.run_pad),m.key_h,false);lv_obj_set_style_radius(w.keys[0],LV_RADIUS_CIRCLE,0);
-      panel_icon(w,0,text_font);lv_label_set_text(w.key_icons[0],text);
-      w.key_commands[0]=tile_controls::RUN;
-    }else{end_panel(w);return 0;}
-  }
-  // Per-render contents: which keys, their icons and states; then the panel size and place.
-  int panel_w=0,panel_h=m.key_h;uint32_t now=esphome::millis();
-  auto set_checked=[&](unsigned n,bool checked){
-    if(w.key_checked[n]==(int)checked)return;w.key_checked[n]=checked;
-    if(checked)lv_obj_add_state(w.keys[n],LV_STATE_CHECKED);else lv_obj_remove_state(w.keys[n],LV_STATE_CHECKED);
-    if(w.key_icons[n])lv_obj_set_style_text_color(w.key_icons[n],checked?theme::color(theme::ON_ACCENT):w.panel_text,0);
-  };
-  auto set_disabled=[&](unsigned n,bool disabled){if(disabled)lv_obj_add_state(w.keys[n],LV_STATE_DISABLED);else lv_obj_remove_state(w.keys[n],LV_STATE_DISABLED);};
-  if(tile_controls::is_key_row(mode)){
-    std::array<tile_controls::Key,3> keys;unsigned count=tile_controls::keys_for(t,keys,now);
-    // With the volume above them, the keys stand centred under its slider, a row lower.
-    const bool volume=pair_form==1&&(t.supported&tile_controls::feature::MEDIA_VOLUME_SET);
-    const int row_w=count?count*key_w+(count-1)*m.gap:0;
-    const int key_x=volume?(pair_w-row_w)/2:0,key_y=volume?m.slider_h+m.gap:0;
-    for(unsigned n=0;n<3;++n){
-      if(n>=count){lv_obj_add_flag(w.keys[n],LV_OBJ_FLAG_HIDDEN);w.key_commands[n]=tile_controls::NONE;continue;}
-      lv_obj_remove_flag(w.keys[n],LV_OBJ_FLAG_HIDDEN);lv_obj_set_pos(w.keys[n],key_x+n*(key_w+m.gap),key_y);
-      label(w.key_icons[n],keys[n].icon);center_icon(w.key_icons[n]);w.key_commands[n]=keys[n].command;w.key_args[n]=keys[n].arg;
-      // The active mode key carries the accent; "off" stays neutral grey.
-      if(keys[n].checked && w.key_checked[n]!=1)lv_obj_set_style_bg_color(w.keys[n],keys[n].arg=="off"?theme::color(theme::OFF):w.panel_accent,LV_STATE_CHECKED);
-      set_checked(n,keys[n].checked);set_disabled(n,keys[n].disabled);
-    }
-    panel_w=row_w;
-    if(pair_form==1&&w.control_slider){
-      set_hidden(w.control_slider,!volume);
-      if(volume){
-        lv_obj_set_pos(w.control_slider,0,0);
-        // Keep the dragged value while the command is under way; HA's report takes over afterwards.
-        travel_look(w.control_slider,t,false,true);if(!lv_obj_has_state(w.control_slider,LV_STATE_PRESSED) && !(t.pending && !t.confirmed))lv_slider_set_value(w.control_slider,slider_value(t),LV_ANIM_OFF);
-        panel_w=pair_w;panel_h=key_y+m.key_h;
-      }
-    }
-  }else if(mode=="mode"){
-    // A thermostat's modes (firmware 0.19.0): the bar under its -/+ in "Temperature and mode", with the same rule for
-    // how many fit (climate_tile::bar_room) and the same modes (climate_bar_keys). Over the card's reach on a card of
-    // more than one row or the whole page, a finger per segment beside the name on a card of one row.
-    const auto cm=bar_metrics(m,large);
-    const bool stretches=w.full||taller;
-    const int reach=std::min(keys_room,ui::control_max_width());
-    std::array<tile_controls::Key,climate_tile::SEGMENTS> modes;
-    const int room=climate_tile::bar_room(cm,reach,(int)tile_controls::climate_bar_keys(t,modes));
-    panel_w=climate_tile::bar_width(cm,reach,room,stretches);panel_h=cm.touch;
-    if(panel_w)draw_mode_bar(w,t,w.panel,w.pill,w.segments.data(),{0,0,panel_w,panel_h},room,cm,large);
-  }else if(mode=="setpoint"||mode=="stepper"){
-    float shown=std::isfinite(t.edit_value)?t.edit_value:tile_controls::edit_target(t);
-    std::string suffix=tile_controls::thermostat(t)?tile_controls::setpoint_suffix(t):screen_text::unit_suffix(t.unit);
-    // A range: the chip says the chosen end (range_chip); the number keeps it too, which the tall form measures by.
-    const float step=tile_controls::edit_step(t);
-    label(w.pill_value,tile_controls::format_value(tile_controls::climate_range(t)?tile_controls::range_end(t,t.range_end):shown,step,suffix.c_str()));
-    panel_w=fill;panel_h=m.key_h+2;
-    if(!taller)stepper_keys(w,fill,panel_h,text_font,&t);
-  }else if(tile_controls::is_slider(mode)){
-    bool has_slider=mode!="volume" || (t.supported & tile_controls::feature::MEDIA_VOLUME_SET);
-    if(has_slider){
-      lv_obj_remove_flag(w.control_slider,LV_OBJ_FLAG_HIDDEN);lv_obj_set_pos(w.control_slider,0,(panel_h-m.slider_h)/2);
-      // Keep the dragged value while the command is under way; HA's report takes over afterwards.
-      travel_look(w.control_slider,t,false,true);if(!lv_obj_has_state(w.control_slider,LV_STATE_PRESSED) && !(t.pending && !t.confirmed))lv_slider_set_value(w.control_slider,slider_value(t),LV_ANIM_OFF);
-      panel_w=track;
-    }else lv_obj_add_flag(w.control_slider,LV_OBJ_FLAG_HIDDEN);
-    if(mode=="volume"){
-      bool has_mute=t.supported & tile_controls::feature::MEDIA_VOLUME_MUTE;
-      if(has_mute){
-        lv_obj_remove_flag(w.keys[0],LV_OBJ_FLAG_HIDDEN);lv_obj_set_pos(w.keys[0],panel_w?panel_w+m.gap:0,0);
-        label(w.key_icons[0],t.muted?tile_controls::glyph::MUTED:tile_controls::glyph::VOLUME);
-        if(t.muted && w.key_checked[0]!=1)lv_obj_set_style_bg_color(w.keys[0],w.panel_accent,LV_STATE_CHECKED);
-        set_checked(0,t.muted);panel_w+=(panel_w?m.gap:0)+m.key_h;
-      }else lv_obj_add_flag(w.keys[0],LV_OBJ_FLAG_HIDDEN);
-    }
-  }else if(mode=="toggle"){
-    bool on=t.state=="on";
-    if(on && w.key_checked[0]!=1)lv_obj_set_style_bg_color(w.keys[0],w.panel_accent,LV_STATE_CHECKED);
-    set_checked(0,on);
-    if(w.knob_on!=(int)on){w.knob_on=on;lv_obj_set_x(w.knob,on?m.toggle_w-m.toggle_h+knob_pad:knob_pad);}
-    panel_w=m.toggle_w;panel_h=m.toggle_h;
-  }else if(mode=="run"){
-    // The requested width: a key created in this pass has no coordinates before LVGL's layout.
-    panel_w=lv_obj_get_style_width(w.keys[0],LV_PART_MAIN);
-  }
-  (void)now;
-  if(!panel_w){hide_panel(w);return 0;}
-  // A panel shown again kept the colours of the card it last served.
-  if(lv_obj_has_flag(w.panel,LV_OBJ_FLAG_HIDDEN)){lv_obj_remove_flag(w.panel,LV_OBJ_FLAG_HIDDEN);w.panel_dirty=true;}
-  lv_obj_set_size(w.panel,panel_w,panel_h);
-  if(w.full||taller)lv_obj_set_pos(w.panel,std::max(0,(content_w-panel_w)/2),std::max(0,content_h-panel_h));
-  else lv_obj_set_pos(w.panel,content_w-panel_w,std::max(0,(content_h-panel_h)/2));
-  w.panel_w=panel_w+m.text_gap;
-  return w.panel_w;
-}
+// Compiled on its own (tile_panel.cpp): on Xtensa main.cpp's literal pool is at the edge of its reach.
+int layout_panel(Widgets &w,const Tile &t,bool large,int content_w,int content_h,int standing=0);
 // Colours follow the card palette; called with the rest of the palette when it changes.
 inline void style_panel(Widgets &w,const Tile &t,lv_color_t accent,lv_color_t text) {
   if(!w.panel || w.panel_mode.empty())return;
@@ -7768,6 +7686,9 @@ inline void style_panel(Widgets &w,const Tile &t,lv_color_t accent,lv_color_t te
     set_color(w.control_slider,LV_STYLE_BG_COLOR,fill,LV_PART_INDICATOR);
     slider_bar(w.control_slider,slider_bar_shown(t,on));
   }
+#ifdef SD_MOD_LIGHT_PRESETS
+  if(t.presets)for(unsigned n=0;n<light_presets::MAX&&n<t.presets->count;++n)light_presets::paint(w.dots[n],t.presets->items[n]);
+#endif
   if(w.knob){set_color(w.keys[0],LV_STYLE_BG_COLOR,theme::color(theme::PANEL_TOGGLE_OFF));set_color(w.keys[0],LV_STYLE_BG_COLOR,theme::color(theme::PANEL_TOGGLE_OFF_PRESSED),LV_STATE_PRESSED);}
 }
 inline void control_event(lv_event_t *e) {
@@ -8299,6 +8220,15 @@ inline void media_standing(Widgets &w,const Tile &t,int x,int y,int width,int he
   if(!lv_obj_has_state(s,LV_STATE_PRESSED) && !(t.pending && !t.confirmed))lv_slider_set_value(s,slider_value(t),LV_ANIM_OFF);
   lv_obj_remove_flag(s,LV_OBJ_FLAG_HIDDEN);
 }
+// A light's presets on a card of one cell (module light_presets): its heading over a row of the keys, as a taller card
+// has its controls under its name.
+inline bool preset_cell(const Widgets &w,const Tile &t){
+#ifdef SD_MOD_LIGHT_PRESETS
+  return !w.wide&&!w.full&&t.row_span()==1&&t.domain()=="light"&&tile_controls::panel_kind(t)=="presets";
+#else
+  (void)w;(void)t;return false;
+#endif
+}
 inline bool render_tall(Widgets &w,const Tile &t,bool selected,int width,int height) {
   selected=selected&&tile_controls::panel_available(t);
   const bool large=ui::large();const int gap=ui::px(large?8:4);
@@ -8321,6 +8251,15 @@ inline bool render_tall(Widgets &w,const Tile &t,bool selected,int width,int hei
       if(tall_tile::layout(both).fits)m=both;else standing=-1;
     }
   }
+#ifdef SD_MOD_LIGHT_PRESETS
+  // A light's slider with its presets under it: two rows, the second as high as the keys.
+  if(selected&&tile_controls::panel_kind(t)=="brightness_presets"&&t.presets){
+    auto both=m;both.row_heights={touch+2,light_presets::tile_key()+2*light_presets::ring()};both.row_count=2;
+    if(tall_tile::layout(both).fits)m=both;
+  }
+  // The presets alone: a row as high as their keys and the ring round one, on a card of one cell and on a taller one.
+  if(selected&&tile_controls::panel_kind(t)=="presets")m.row_heights={light_presets::tile_key()+2*light_presets::ring(),0};
+#endif
   auto cover_metrics=m;cover_metrics.row_count=0;
   const auto cover_base=tall_tile::layout(cover_metrics);
   auto cover=cover_tile_layout(t,cover_base.body,touch,gap,m.state_h);
@@ -8333,7 +8272,7 @@ inline bool render_tall(Widgets &w,const Tile &t,bool selected,int width,int hei
     const auto side=cover_tile_layout(t,{width/2+gap,0,width-width/2-gap,height},touch,gap,m.state_h);
     if(side.fits&&(!cover.fits||side.tier>cover.tier)){cover=side;beside=true;}
   }
-  if((w.full||t.row_span()==1)&&!cover.fits&&!tile_controls::climate_modes_selected(t)){if(w.extra_mode=="cover_tilt")hide_extra(w);return false;}
+  if((w.full||t.row_span()==1)&&!cover.fits&&!tile_controls::climate_modes_selected(t)&&!preset_cell(w,t)){if(w.extra_mode=="cover_tilt")hide_extra(w);return false;}
   if(cover.fits){selected=false;m.row_count=0;}
   auto l=tall_tile::layout(m);
   // An unusual override can leave too little physical room for the selection.
@@ -8531,7 +8470,10 @@ inline bool render_tall(Widgets &w,const Tile &t,bool selected,int width,int hei
   }else if(!t.builtin() && fresh() && t.available()){
     const std::string value=d=="light"?light_value_text(t):card_status(t,true);
     const lv_font_t *font=w.value_font;
-    for(const auto *candidate:{watch_value_font,w.title_font,w.value_font})
+    // A light's percentage that cannot take the large face (its slider and presets under it) steps down to the controls'
+    // regular face, never the bold name's: a value, not a heading.
+    const lv_font_t *second=d=="light"&&control_font?control_font:w.title_font;
+    for(const auto *candidate:{watch_value_font,second,w.value_font})
       if(candidate&&face_covers(candidate,value)&&tall_tile::fits_text(body,text_width(value,candidate),lv_font_get_line_height(candidate))){font=candidate;break;}
     if(text(0,value,font,{0,body.y+std::max(0,(body.h-static_cast<int>(lv_font_get_line_height(font)))/2),width,body.h},LV_TEXT_ALIGN_CENTER))
       drop_repeat(value);
@@ -8802,12 +8744,12 @@ inline void render_slot(size_t slot) {
   // its head (mini below), and so does a wide card too narrow for a panel.
   const bool taller=t.row_span()>1 && !w.full;
   const bool inline_panel=(w.wide||taller) && !w.full && t.inline_control=="slider" && !tile_controls::inline_kind(d).empty();
-  bool with_panel=(w.wide||taller) && !t.builtin() && !watch && fresh() && t.available() &&
+  bool with_panel=(w.wide||taller||preset_cell(w,t)) && !t.builtin() && !watch && fresh() && t.available() &&
                   (inline_panel || (!t.controls.empty() && t.inline_control!="slider"));
   // A panel needs its own width plus the icon and some name; a narrow wide card stays a plain card. What it
   // needs is what it takes: the cells its controls fill (layout_panel), or the toggle and the run key their own
   // width.
-  if(with_panel && !w.full && !taller){
+  if(with_panel && !w.full && !taller && w.wide){
     const bool lt=ui::large();
     const PanelMetrics pm=panel_metrics(lt);
     const std::string kind=tile_controls::panel_kind(t);
@@ -8933,7 +8875,7 @@ inline void render_slot(size_t slot) {
     label(w.value,value);
     lap(swipe_profile::GEOMETRY);
   }else if((taller||(w.full&&(tile_controls::cover_tilt_selected(t)||tile_controls::climate_modes_selected(t)))||
-            (!w.full&&t.row_span()==1&&t.inline_control!="slider"&&cover_row_card(t)))&&!custom&&!watch&&!graph&&
+            (!w.full&&t.row_span()==1&&t.inline_control!="slider"&&(cover_row_card(t)||preset_cell(w,t))))&&!custom&&!watch&&!graph&&
      render_tall(w,t,with_panel,content_w,content_h)){
     lap(swipe_profile::GEOMETRY);
   }else if(w.full && !bedside){

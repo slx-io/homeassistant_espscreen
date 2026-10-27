@@ -6,6 +6,7 @@ import { isWideSize } from './sizes';
 import { TILE, ofType, taps as catalogueTaps } from './catalogue';
 import { PLUGIN_LIST_MAX, PLUGIN_OPTIONS_BYTES, PLUGIN_TILE } from './plugins';
 import rules from './page-rules.json';
+import { cleanPreset, MAX as PRESETS_MAX } from './light-presets';
 import type { PageLayout, PageTile } from '../types';
 
 const bytes = (s: string) => new TextEncoder().encode(s).length;
@@ -99,7 +100,7 @@ export function validatePageShape(layout: PageLayout, plugins = false) {
       fields(tile.appearance, ['label', 'presentation', 'display', 'icon', 'background', 'historyHours', 'refresh', 'subtitle', 'fit', 'overlay',
         'mapEntities', 'mapFraming', 'mapDistance', 'mapFollow', 'mapMarkers', 'mapNames', 'mapZones', 'mapStreets', 'mapLook', 'energyFlow', 'textTemplate',
         ...CALENDAR_FIELDS, ...CALENDAR_MORE, ...METER_FIELDS], ['label']);
-      fields(tile.interaction, ['tap', 'inline', 'controls', 'action', 'guard', 'play', 'speaker', 'shuffle', 'repeat', 'tilt_open'], []);
+      fields(tile.interaction, ['tap', 'inline', 'controls', 'action', 'guard', 'play', 'speaker', 'shuffle', 'repeat', 'tilt_open', 'presets', 'preset_levels'], []);
       const content = tile.content;
       fields(content, ['kind', 'entityId', 'name', 'target', 'plugin', 'tile', 'options'], ['kind']);
       if (content.kind === 'entity') {
@@ -154,6 +155,10 @@ export function validateCardOptions(tile: PageTile, entityId: string, size: stri
     if (value !== undefined && !choices.includes(value)) fail();
   // Where a cover's slats stand open (core.validate_layout): Home Assistant's 100, the default, is never stored.
   if (i.tilt_open !== undefined && i.tilt_open === ofType(domain)?.tilt_open?.[0]) fail('normalization');
+  // A light's presets (light_presets.validate): at most four on a light, none stored empty; their brightness shown only when true.
+  if (i.presets !== undefined && (domain !== 'light' || !Array.isArray(i.presets) || !i.presets.length || i.presets.length > PRESETS_MAX
+    || i.presets.some((p) => JSON.stringify(cleanPreset(p)) !== JSON.stringify(p)))) fail('normalization');
+  if (i.preset_levels !== undefined && (domain !== 'light' || i.preset_levels !== true)) fail('normalization');
   if (a.icon !== undefined && !icon(a.icon)) fail();
   if (rules.wideOnly.includes(a.display || '') && !isWideSize(size)) fail('normalization');
   if (tile.content.kind === 'navigation' && (size === 'full' || a.display !== undefined || i.inline !== undefined ||

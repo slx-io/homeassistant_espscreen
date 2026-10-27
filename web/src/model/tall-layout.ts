@@ -6,6 +6,7 @@
 import type { CardLook } from "./card-layout";
 import { iconFace } from "./card-layout";
 import { textPx } from "./text-fit";
+import { presetPanel, presetSizes } from "./light-presets";
 import { lineOf, touchMin, uiScale, type Shape } from "./ui-scale";
 
 export type Rect = { x: number; y: number; w: number; h: number };
@@ -132,12 +133,14 @@ export type TallInput = {
   setpoint?: string; widest?: string; runWidth?: number;
   /** "Now 23°" under a thermostat's big number. */
   now?: string;
+  /** A light's presets: how many the tile has, and whether the card is one cell with its heading over them (preset_cell). */
+  presets?: number; presetCell?: boolean;
 };
 export type TallCard = {
   circle: { x: number; y: number; size: number; icon: number } | null;
   title: TallText | null; value: TallText | null; body: TallText[];
   panel: { kind: string; x: number; y: number; w: number; h: number; keyW: number; keyH: number; gap: number; knob: number; slider: Rect | null; keys: Rect | null;
-    standing: Rect | null } | null;
+    standing: Rect | null; dots?: { x: number; y: number; size: number }[] } | null;
   climate: (ClimateLayout & { faceSize: number; faceWeight: number; now: string }) | null;
 };
 
@@ -160,6 +163,14 @@ export function tallCard(shape: Shape, look: CardLook, width: number, height: nu
       if (tallLayout(both)) m = both; else standing = -1;
     }
   }
+  // A light's slider with its presets under it: two rows, the second as high as the keys; its keys alone, on a card of one
+  // cell or a taller one, a row as high as them (runtime_tiles render_tall).
+  const z = presetSizes(shape), presetRow = z.tileKey + 2 * z.ring;
+  if (selected && input.controls === "brightness_presets" && (input.presets ?? 0) > 0) {
+    const both = { ...m, rows: [touchKey + 2, presetRow] };
+    if (tallLayout(both)) m = both;
+  }
+  if (selected && (input.presetCell || input.controls === "presets")) m = { ...m, rows: [presetRow] };
   let l = tallLayout(m);
   if (!l) { selected = false; m = { ...m, rows: [] }; l = tallLayout(m); }
   if (!l) return { circle: null, title: null, value: null, body: [], panel: null, climate: null };
@@ -203,12 +214,21 @@ export function tallCard(shape: Shape, look: CardLook, width: number, height: nu
   if (selected && kind) {
     const keyH = input.domain === "media_player" ? mediaKey : touchKey, pill = Math.min(width, reach), panelGap = px(large ? 8 : 4);
     const keyW = Math.min(keyH, Math.max(touchMin(shape), div(pill - 2 * panelGap, 3)));
-    let pw: number, ph = keyH, slider: Rect | null = null, keys: Rect | null = null;
+    let pw: number, ph = keyH, slider: Rect | null = null, keys: Rect | null = null, dots: { x: number; y: number; size: number }[] | undefined;
     const isKeys = ["buttons", "playback", "volume_playback"].includes(kind) || (kind === "stepper" && input.domain.endsWith("select"));
     if (kind === "toggle") { pw = Math.min(width, 2 * keyH); }
     else if (kind === "setpoint" || kind === "setpoint_mode" || (kind === "stepper" && !isKeys)) { pw = pill; ph = keyH + 2; }
     else if (kind === "mode") { pw = Math.min(pill, reach); }
     else if (kind === "run") pw = Math.max(div(keyW * 3, 2), (input.runWidth ?? 0) + 2 * px(large ? 22 : 14));
+    else if (kind === "presets" || kind === "brightness_presets") {
+      // A row of round keys, the ring's room round them, under the slider of the pair.
+      const pair = kind === "brightness_presets", p = presetPanel(shape, input.presets ?? 0, pill, z.tileKey);
+      pw = Math.max(p.width, pair ? pill : 0);
+      const rowY = pair ? keyH + (p.row.count ? panelGap : 0) : 0;
+      ph = pair && !p.row.count ? keyH : rowY + p.height;
+      if (pair) slider = { x: div(pw - pill, 2), y: 0, w: pill, h: keyH };
+      dots = p.keys.map((k) => ({ x: div(pw - p.width, 2) + k.x, y: rowY + k.y, size: k.size }));
+    }
     else if (kind === "volume") pw = Math.max(touchMin(shape), pill - keyH - panelGap) + panelGap + keyH;
     else if (isKeys) {
       const count = Math.max(0, Math.min(3, input.keys)), row = count ? count * keyW + (count - 1) * panelGap : 0;
@@ -223,7 +243,7 @@ export function tallCard(shape: Shape, look: CardLook, width: number, height: nu
     const top = l.rows[0]?.y ?? 0, room = (l.rows.length > 1 ? bottom(l.rows[1]) : bottom(l.rows[0] ?? EMPTY)) - top;
     if (pw && pw <= width && ph <= room) {
       out.panel = { kind, x: standing > 0 ? 0 : div(width - pw, 2), y: top + div(room - ph, 2), w: pw, h: ph, keyW, keyH, gap: panelGap,
-        knob: keyH - 2 * px(large ? 4 : 3), slider, keys,
+        knob: keyH - 2 * px(large ? 4 : 3), slider, keys, dots,
         standing: standing > 0 ? { x: width + gap, y: 0, w: wholeW - width - gap, h: standing } : null };
     }
   }
@@ -269,7 +289,9 @@ export function tallCard(shape: Shape, look: CardLook, width: number, height: nu
     if (body.h >= lineOf(font.size)) out.body.push(text(input.reading, font, 0, body.y + Math.max(0, div(body.h - lineOf(font.size), 2)), width, "center"));
   } else if (input.value) {
     let font = small;
-    for (const f of [{ size: look.watch, weight: 500 }, label, small])
+    // A light's percentage that cannot take the large face steps down to the controls' regular face, never the bold name's.
+    const second: Face = input.domain === "light" ? { size: look.sublabelBig, weight: 400 } : label;
+    for (const f of [{ size: look.watch, weight: 500 }, second, small])
       if (textPx(input.value, f.size, f.weight) <= body.w && lineOf(f.size) <= body.h) { font = f; break; }
     if (body.h >= lineOf(font.size)) { out.body.push(text(input.value, font, 0, body.y + Math.max(0, div(body.h - lineOf(font.size), 2)), width, "center")); dropRepeat(input.value); }
   }

@@ -46,7 +46,9 @@ APPEARANCE = {
 # A favourite (app 0.4.42) keeps what it plays (`play`, Home Assistant's own ids) and on which speaker (`speaker`), and
 # since app 0.4.84 its own shuffle and repeat.
 INTERACTION = {"tap": "tap", "inline": "inline", "controls": "controls", "action": "action", "guard": "guard", "play": "play", "speaker": "speaker",
-               "shuffle": "shuffle", "repeat": "repeat", "tilt_open": "tilt_open"}
+               "shuffle": "shuffle", "repeat": "repeat", "tilt_open": "tilt_open",
+               # A light's presets (module light_presets, light_presets.py): a brightness with a white shade or a colour each.
+               "presets": "presets", "preset_levels": "preset_levels"}
 
 
 class LayoutError(ValueError):

@@ -217,7 +217,8 @@
       "color": "Couleur",
       "color_temperature": "Température de couleur",
       "brightness": "Luminosité",
-      "waiting": "Attente..."
+      "waiting": "Attente...",
+      "presets": "Préréglages"
     },
     "effects": {
       "effect": "Effet",
@@ -1043,7 +1044,9 @@
         },
         "light": {
           "toggle": "Interrupteur marche/arrêt",
-          "brightness": "Curseur de luminosité"
+          "brightness": "Curseur de luminosité",
+          "presets": "Préréglages",
+          "brightness_presets": "Curseur de luminosité et préréglages"
         },
         "fan": {
           "toggle": "Interrupteur marche/arrêt",
@@ -2530,6 +2533,29 @@
         "room_hint": "L'écran les dessine là où la tuile a la place (firmware 0.57.0 ou plus récent) : sous le nom sur une tuile simple, à côté sur une tuile double largeur. Là où ils ne tiennent pas, la tuile reste telle qu'elle est sans eux.",
         "tilt": "",
         "tilt_hint": ""
+      },
+      "presets": {
+        "label": "Préréglages",
+        "preset": "Préréglage {n}",
+        "swatch_aria": "Préréglage {n}, luminosité {b} %",
+        "white": "Blanc",
+        "colour": "Couleur",
+        "level": "Luminosité seule",
+        "white_shade": "Teinte de blanc",
+        "kelvin": "{k} K",
+        "hue": "Teinte",
+        "degrees": "{h}°",
+        "saturation": "Saturation",
+        "brightness": "Luminosité",
+        "percent": "{n} %",
+        "use_light": "Reprendre l'état actuel de la lampe",
+        "use_light_off": "Allumez la lampe pour reprendre sa luminosité et sa couleur.",
+        "add": "Ajouter un préréglage",
+        "add_first": "Ajouter un premier préréglage",
+        "levels": "Afficher la luminosité sur les préréglages",
+        "levels_hint": "Écrit la luminosité en petit dans chaque cercle. Un préréglage de luminosité seule l'affiche toujours.",
+        "hint": "Un appui sur un préréglage règle la lampe d'un coup ; l'anneau marque celui qu'elle affiche. Cliquez-en un pour le modifier, faites-le glisser pour changer l'ordre.",
+        "hint_empty": "Jusqu'à quatre touches rondes, comme les couleurs favorites de Home Assistant, chacune avec sa luminosité. Un nouveau part de ce que la lampe affiche."
       },
       "tap": {
         "label": "Au toucher",

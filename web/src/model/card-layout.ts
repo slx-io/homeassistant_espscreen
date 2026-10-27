@@ -6,6 +6,7 @@
 // the editor's own. tests/test_editor_parity.py holds these to the firmware.
 import ink from "./icon-ink.json";
 import { textPx } from "./text-fit";
+import { presetPanel, presetSizes } from "./light-presets";
 import { cardContent, cardHeight, frameOf, lineOf, touchMin, uiScale, type Shape } from "./ui-scale";
 
 /** The look's faces and a card's frame on this glass: the board's own sizes, or for a shape stored without them (a
@@ -97,7 +98,7 @@ export function panelMetrics(shape: Shape) {
     : { keyW: px(40), keyH: px(34), radius: px(9), gap: px(4), sliderH: px(30), toggleW: px(48), toggleH: px(26), runPad: px(14), textGap: px(6) };
 }
 
-export type PanelKind = "toggle" | "keys" | "setpoint" | "slider" | "volume" | "run" | "mode";
+export type PanelKind = "toggle" | "keys" | "setpoint" | "slider" | "volume" | "run" | "mode" | "presets";
 /** A control at the right of a card of one row (layout_panel), in glass pixels: its width and height, a key's size and
  * the gap between keys, standing at the right of the card's room, centred on its height. `fill` is the room a control
  * that fills it takes (rest_content_width), `keys` how many keys a row draws, `run` the run key's word width. */
@@ -105,13 +106,20 @@ export function cardPanel(shape: Shape, kind: PanelKind, fill: number, room: { w
   const m = panelMetrics(shape);
   const keyW = Math.min(m.keyW, Math.max(touchMin(shape), Math.trunc((fill - 2 * m.gap) / 3)));
   let width = 0, height = m.keyH;
+  // A light's presets (`keys` of them): a row of round keys where its slider would stand, as many as its room holds,
+  // the ring's room round them (runtime_tiles layout_panel).
+  let presets: ReturnType<typeof presetPanel> | null = null;
+  if (kind === "presets") {
+    presets = presetPanel(shape, keys, fill, Math.max(m.keyH, Math.min(room.height, presetSizes(shape).tileKey)));
+    width = presets.width; height = presets.height;
+  }
   if (kind === "toggle") { width = m.toggleW; height = m.toggleH; }
   else if (kind === "keys") width = keys ? keys * keyW + (keys - 1) * m.gap : 0;
   else if (kind === "setpoint") { width = fill; height = m.keyH + 2; }
   else if (kind === "slider") width = fill;
   else if (kind === "volume") width = Math.max(touchMin(shape), fill - m.gap - m.keyH) + m.gap + m.keyH;
   else if (kind === "run") width = Math.max(Math.trunc((m.keyW * 3) / 2), run + 2 * m.runPad);
-  return { ...m, kind, keyW, width, height, x: room.width - width, y: Math.max(0, Math.trunc((room.height - height) / 2)), taken: width ? width + m.textGap : 0,
+  return { ...m, kind, keyW, width, height, presets, x: room.width - width, y: Math.max(0, Math.trunc((room.height - height) / 2)), taken: width ? width + m.textGap : 0,
     knob: m.toggleH - 8, slider: Math.max(touchMin(shape), fill - m.gap - m.keyH) };
 }
 

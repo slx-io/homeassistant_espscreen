@@ -217,7 +217,8 @@
       "color": "Farbe",
       "color_temperature": "Farbtemperatur",
       "brightness": "Helligkeit",
-      "waiting": "Warte..."
+      "waiting": "Warte...",
+      "presets": "Favoriten"
     },
     "effects": {
       "effect": "Effekt",
@@ -1043,7 +1044,9 @@
         },
         "light": {
           "toggle": "Ein/Aus-Schalter",
-          "brightness": "Helligkeitsregler"
+          "brightness": "Helligkeitsregler",
+          "presets": "Voreinstellungen",
+          "brightness_presets": "Helligkeitsregler und Voreinstellungen"
         },
         "fan": {
           "toggle": "Ein/Aus-Schalter",
@@ -2530,6 +2533,29 @@
         "room_hint": "Der Bildschirm zeigt sie, wo die Kachel Platz dafür hat (Firmware 0.57.0 oder neuer): auf einer einfachen Kachel unter dem Namen, auf einer doppelt breiten daneben. Wo sie nicht passen, sieht die Kachel aus wie ohne sie.",
         "tilt": "",
         "tilt_hint": ""
+      },
+      "presets": {
+        "label": "Voreinstellungen",
+        "preset": "Voreinstellung {n}",
+        "swatch_aria": "Voreinstellung {n}, Helligkeit {b} %",
+        "white": "Weiß",
+        "colour": "Farbe",
+        "level": "Nur Helligkeit",
+        "white_shade": "Weißton",
+        "kelvin": "{k} K",
+        "hue": "Farbton",
+        "degrees": "{h}°",
+        "saturation": "Sättigung",
+        "brightness": "Helligkeit",
+        "percent": "{n} %",
+        "use_light": "Aktuellen Zustand der Leuchte übernehmen",
+        "use_light_off": "Schalte die Leuchte ein, um ihre Helligkeit und Farbe zu übernehmen.",
+        "add": "Voreinstellung hinzufügen",
+        "add_first": "Erste Voreinstellung hinzufügen",
+        "levels": "Helligkeit auf Voreinstellungen zeigen",
+        "levels_hint": "Schreibt die Helligkeit klein in jeden Kreis. Eine Voreinstellung nur mit Helligkeit zeigt sie immer.",
+        "hint": "Ein Tippen auf eine Voreinstellung stellt die Leuchte in einem Schritt darauf ein; der Ring zeigt, welche gerade leuchtet. Klicke eine an, um sie zu ändern, ziehe sie, um die Reihenfolge zu ändern.",
+        "hint_empty": "Bis zu vier runde Tasten, wie die Lieblingsfarben in Home Assistant, jede mit eigener Helligkeit. Eine neue beginnt mit dem, was die Leuchte gerade zeigt."
       },
       "tap": {
         "label": "Beim Tippen",

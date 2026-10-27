@@ -19,6 +19,9 @@
 #ifdef SD_MOD_TEXT_CARD
 #include "module_text_card.h"
 #endif
+#ifdef SD_MOD_LIGHT_PRESETS
+#include "module_light_presets.h"
+#endif
 #include <cmath>
 #include <cstdint>
 #include <cstdlib>
@@ -512,6 +515,8 @@ struct Tile {
   int hue = 0, kelvin = 3000, min_kelvin = 0, max_kelvin = 0;
   bool received = false;
   bool has_hs_color = false;
+  // A light in a white shade: Home Assistant reports its colour temperature, which it names in no colour mode.
+  bool white = false;
   int saturation = 0;
   std::string tap = "auto", display = "standard", inline_control = "none", guard = "confirm";
   // What the second line says (firmware 0.2.90+), as the option was stored: "auto" is the line the screen works
@@ -543,6 +548,10 @@ struct Tile {
     std::array<float, 2> thresholds{NAN, NAN};  // in the sensor's unit; NAN: 80 % and 90 % of the range
   };
   std::shared_ptr<const Meter> meter;
+#ifdef SD_MOD_LIGHT_PRESETS
+  // A light's presets (module light_presets): its tile's round keys and its card's; none on any other tile.
+  std::shared_ptr<const light_presets::Presets> presets;
+#endif
   bool is_meter() const { return display == "meter" && domain() == "sensor"; }
   bool live() const { const auto d = domain(); return display == "live" && (d == "camera" || d == "image"); }
   // A media player's album cover in the icon's place (firmware 0.2.78+): "display": "cover" on a single or double-width

@@ -12,6 +12,8 @@ import CoverCell from "./CoverCell.vue";
 import ModeBar from "../ModeBar.vue";
 import SensorHistory from "../SensorHistory.vue";
 import RangeChip from "./RangeChip.vue";
+import PresetDisc from "./PresetDisc.vue";
+import { levelShown } from "../../model/light-presets";
 
 const props = defineProps<{ card: TileCardView }>();
 // The same card for as long as this face stands (useTileCard): read without going through the props each time.
@@ -63,6 +65,7 @@ const card = props.card;
       <template v-else-if="card.face.controls === 'volume'"><span class="range" :style="card.sliderStyle"></span><span class="key mdi">{{ card.key("volume-high") }}</span></template>
       <ModeBar v-else-if="card.face.modeBar" :a="card.current?.a || {}" :mode="card.current?.state || ''" :domain="card.domain" place="full" :columns="card.shape.columns" /><template v-else-if="card.face.panelKeys.length"><span v-for="(control, i) in card.face.panelKeys" :key="i" class="key mdi" :class="{ primary: control.primary, disabled: control.disabled, active: control.mode === card.current?.state }">{{ card.key(control.icon) }}</span></template>
       <span v-else-if="card.face.controls === 'run'" class="run">{{ card.texts.runText }}</span>
+      <template v-else-if="card.face.controls === 'presets'"><PresetDisc v-for="(preset, i) in card.presets" :key="i" class="dot-loose" :preset="preset" :lit="i === card.presetLit" :level="levelShown(preset, card.tile.options?.preset_levels === true)" /></template>
       <span v-else class="range" :style="card.sliderStyle"></span>
     </span>
   </template>
@@ -91,7 +94,12 @@ const card = props.card;
       </CoverTilePreview>
     </span>
     <span v-else-if="card.face.controls" class="ctl" :class="{ fill: card.face.fillsCell, 'glass-panel': !!card.glassStyle.panel }" :style="card.glassStyle.panel ?? undefined">
-      <span v-if="card.face.controls === 'toggle'" class="tog" :class="{ off: !card.on }"></span>
+      <!-- A light's presets (module light_presets): its round keys where its slider would stand, as many as fit. -->
+      <template v-if="card.face.controls === 'presets'">
+        <template v-if="card.glassStyle.dots"><PresetDisc v-for="dot in card.glassStyle.dots" :key="dot.key" class="dot" :preset="dot.preset" :lit="dot.lit" :level="dot.level" :style="dot.style" /></template>
+        <PresetDisc v-for="(preset, i) in card.presets" v-else :key="i" class="dot-loose" :preset="preset" :lit="i === card.presetLit" :level="levelShown(preset, card.tile.options?.preset_levels === true)" />
+      </template>
+      <span v-else-if="card.face.controls === 'toggle'" class="tog" :class="{ off: !card.on }"></span>
       <span v-else-if="card.face.controls === 'setpoint'" class="stp"><span class="mdi">{{ card.key("minus") || "−" }}</span><RangeChip v-if="card.chip" :chip="card.chip" :icon="card.key(card.chip.icon)" :wide="card.wideFit" :glass="card.glassScale" /><b v-else :style="card.pill ?? { '--pill-ems': textEms(card.texts.setpoint + '8') }">{{ card.texts.setpoint }}</b><span class="mdi">{{ card.key("plus") || "+" }}</span></span>
       <template v-else-if="card.face.controls === 'stepper' && card.domain.endsWith('select')"><span class="key mdi">{{ card.key("chevron-left") }}</span><span class="key mdi">{{ card.key("chevron-right") }}</span></template>
       <span v-else-if="card.face.controls === 'stepper'" class="stp"><span class="mdi">{{ card.key("minus") || "−" }}</span><b>{{ card.texts.value }}</b><span class="mdi">{{ card.key("plus") || "+" }}</span></span>
@@ -157,4 +165,7 @@ const card = props.card;
 .tile .ctl.glass-panel > .range + .key { width: var(--key-h); }
 .tile .ctl.glass-panel .stp { flex: 1; height: 100%; }
 .tile .ctl.glass-panel .run { height: 100%; border-radius: 999px; display: grid; place-items: center; }
+.tile .ctl.glass-panel > .dot { position: absolute; }
+.tile .ctl.glass-panel { overflow: visible; }
+.tile .ctl .dot-loose { width: 22px; height: 22px; flex: none; font-size: 9px; }
 </style>

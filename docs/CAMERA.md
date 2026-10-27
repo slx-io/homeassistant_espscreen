@@ -534,8 +534,15 @@ the P4's pixel engine: the middle, 1280 x 720. The whole of a larger mode, scale
 and left out (a reTerminal D1001, 2026-10-25, a forced pass of its 1280 x 720 into 960 x 528 beside two live tiles and
 three viewers): the panel never ran dry, but the pass took 77 to 89 ms a frame, the video fell from 12-13 to 7-9 fps,
 and the live tiles from 12-14 to 6-9 pictures a second with laying out a picture going from 60 to 92-137 ms. The PPA
-is one device that the video and the tiles share (PICTURE_ARCHITECTURE.md, section 2.4, has what its driver allows), so
-the Guition shows the middle of its camera. The encoder keeps its reference frame in internal RAM and that grows
+is one device that the video and the tiles share (PICTURE_ARCHITECTURE.md, section 2.4, has what its driver allows).
+The Guition's whole field comes another way (Screen camera 0.6.5, its default since 2026-10-27): the OV02C10 reads its
+whole array with each two columns averaged in the sensor, 960 x 1080 at 15 frames a second (with its lines binned
+too, the sensor stopped after one frame), and Screen camera's frame hub halves the lines once on the PPA, 960 x 528
+for every consumer, in whole macroblocks so the encoder cuts nothing. Measured on a Guition 10.1 (2026-10-27, two live
+tiles and three viewers, 12 minutes against Sharp's 12): the panel never ran dry, the tiles kept 14.6 and 8.0 pictures
+a second, laying out a live picture took 49 to 54 ms instead of 32 to 36, the video gave 10.3 fps instead of 12.3,
+and the halving took 44 ms a frame on average, up to 0.74 s while it waited its turn on the PPA. Sharp, the middle at
+1280 x 720, stays a setting away. The encoder keeps its reference frame in internal RAM and that grows
 with the size, so the video takes no camera above 1280 x 800; a sensor whose modes are all larger gets a smaller one
 in the part's YAML (`esp_video_camera: resolution`), never in a board file. The microphone goes as Opus, 16 kHz in one channel at 32 kbit/s. A small
 RTSP server on the screen (port 8554, RTP over the RTSP connection) serves up to three viewers from the one encoder.
@@ -547,8 +554,12 @@ Home Assistant already keeps for the screen (`sha256("tessera-video:" + key)`, i
 
 **What changes on the screen.** The camera runs from boot, in its raw mode. Its JPEG pictures are gone, and so is the
 camera "Camera" of the screen's device: "Video" gives the stills now. Light level and motion of Screen camera keep
-working: they read the same frames the video gets. The dot in the top right corner shows while anyone watches. The
-microphone listens only while someone watches, and the voice assistant can listen at the same time.
+working: they read the same frames the video gets. The dot in the top right corner is solid while anyone watches and a
+ring while the camera only senses (light level, motion; plugin API 0.20). While nobody watches, for sensing alone or
+for nothing at all, the sensor makes 5 frames a second, and full speed again the moment someone opens the video or
+Home Assistant asks for a picture (Screen camera 0.6.5, its `frame_rate.h`; what a sensor can, its driver tells the
+camera through `camera_sensor.h`, on any board). The microphone listens only while someone watches, and the voice
+assistant can listen at the same time.
 
 **What it takes, measured on a reTerminal D1001.** Each of these cost a build to find, and each is kept in the code:
 

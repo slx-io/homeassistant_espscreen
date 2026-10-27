@@ -770,6 +770,11 @@ api:
                     #ifdef SD_MOD_TEXT_CARD
                     features.add("text_card");
                     #endif
+                    // light_presets (module light_presets, docs/LIGHT_PRESETS.md): a light's tile and card draw the round keys of
+                    // its presets, so ESP Screens sends the controls presets and brightness_presets; another screen gets the slider.
+                    #ifdef SD_MOD_LIGHT_PRESETS
+                    features.add("light_presets");
+                    #endif
                     auto sizes = root["tile_sizes"].to<JsonArray>();
                     for (const auto &size : page_protocol::TILE_SIZES)
                       if (size.fits(runtime_tiles::grid.columns, runtime_tiles::grid.rows)) sizes.add(size.name);

@@ -217,7 +217,8 @@
       "color": "Cor",
       "color_temperature": "Temperatura de cor",
       "brightness": "Brilho",
-      "waiting": "A aguardar..."
+      "waiting": "A aguardar...",
+      "presets": "Predefinições"
     },
     "effects": {
       "effect": "Efeito",
@@ -1043,7 +1044,9 @@
         },
         "light": {
           "toggle": "Interruptor",
-          "brightness": "Controlo deslizante de brilho"
+          "brightness": "Controlo deslizante de brilho",
+          "presets": "Predefinições",
+          "brightness_presets": "Controlo de brilho e predefinições"
         },
         "fan": {
           "toggle": "Interruptor",
@@ -2530,6 +2533,29 @@
         "room_hint": "O ecrã desenha-os onde o mosaico tem espaço (firmware 0.57.0 ou mais recente): por baixo do nome num mosaico simples, ao lado num de largura dupla. Onde não cabem, o mosaico fica como sem eles.",
         "tilt": "",
         "tilt_hint": ""
+      },
+      "presets": {
+        "label": "Predefinições",
+        "preset": "Predefinição {n}",
+        "swatch_aria": "Predefinição {n}, brilho {b}%",
+        "white": "Branco",
+        "colour": "Cor",
+        "level": "Só brilho",
+        "white_shade": "Tom de branco",
+        "kelvin": "{k} K",
+        "hue": "Matiz",
+        "degrees": "{h}°",
+        "saturation": "Saturação",
+        "brightness": "Brilho",
+        "percent": "{n}%",
+        "use_light": "Usar o estado atual da luz",
+        "use_light_off": "Ligue a luz para usar o seu brilho e a sua cor.",
+        "add": "Adicionar uma predefinição",
+        "add_first": "Adicionar a primeira predefinição",
+        "levels": "Mostrar o brilho nas predefinições",
+        "levels_hint": "Escreve o brilho em pequeno em cada círculo. Uma predefinição só de brilho mostra-o sempre.",
+        "hint": "Um toque numa predefinição põe a luz assim de uma vez; o anel marca a que a luz mostra. Clique numa para a alterar, arraste para mudar a ordem.",
+        "hint_empty": "Até quatro teclas redondas, como as cores favoritas do Home Assistant, cada uma com o seu brilho. Uma nova parte do que a luz mostra agora."
       },
       "tap": {
         "label": "Ao tocar",

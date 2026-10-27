@@ -61,8 +61,20 @@ export function condition(domain: string, when: Needs | undefined, attributes: A
 export function screenFeatures() {
   const found = new Set<string>();
   for (const type of Object.values(TYPES))
-    for (const item of [...(type.controls ?? []), ...(type.displays ?? [])]) if (item.screen?.feature) found.add(item.screen.feature);
+    for (const item of [...(type.controls ?? []), ...(type.displays ?? [])])
+      for (const screen of [item.screen, item.range?.screen, item.room]) if (screen?.feature) found.add(screen.feature);
   return found;
+}
+/** The features of the catalogue a screen draws, as drawable takes them: none on firmware without a thermostat's range;
+ * every one but the larger vacuum tile on a board without the vacuum card's module, and but a light's presets on one
+ * without the light_presets module; else all (null). */
+export function featuresOf(screen: { rangeless?: boolean; vacuumTile?: boolean; lightPresets?: boolean }): Set<string> | null {
+  if (screen.rangeless) return new Set<string>();
+  if (screen.vacuumTile !== false && screen.lightPresets !== false) return null;
+  const all = screenFeatures();
+  if (screen.vacuumTile === false) all.delete("vacuum_tile");
+  if (screen.lightPresets === false) all.delete("light_presets");
+  return all;
 }
 export function screenHolds(requirement: Screen | undefined, features: Set<string> | null = null) {
   return !requirement?.feature || features === null || features.has(requirement.feature);

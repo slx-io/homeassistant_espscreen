@@ -16,12 +16,12 @@ import IconChoices from "./IconChoices.vue";
 import IconPicker from "./IconPicker.vue";
 import TileAnchor from "./TileAnchor.vue";
 import { coverPrimary, coverTiltKind, hasCoverTilt, withCoverTilt } from "../model/tall-controls";
-import { roomControls } from "../model/catalogue";
 import ChoiceField from "./ChoiceField.vue";
 import CalendarSection from "./inspector/CalendarSection.vue";
 import FavoriteSection from "./inspector/FavoriteSection.vue";
 import MapSection from "./inspector/MapSection.vue";
 import MeterSection from "./inspector/MeterSection.vue";
+import PresetsSection from "./inspector/PresetsSection.vue";
 import TextSection from "./inspector/TextSection.vue";
 import NameField from "./inspector/NameField.vue";
 import PrecisionRow from "./inspector/PrecisionRow.vue";
@@ -36,7 +36,7 @@ import UiMenu from "./ui/UiMenu.vue";
 import UiMenuItem from "./ui/UiMenuItem.vue";
 import rules from "../model/page-rules.json";
 import { precisionOffered } from "../model/display-precision";
-import { controlChoices, controlHint, displayChoices, displayHint, goesToChoices, goesToHint, offeredChoices, sliderOffered, subChoices,
+import { controlChoices, controlHint, displayChoices, displayHint, goesToChoices, goesToHint, offeredChoices, presetsOffered, roomHere, sliderOffered, subChoices,
   tapChoices, tapHint, tileControls, tileDisplay, tiltOffered, type TilePanel } from "../model/tile-options";
 import { useUiStore } from "../stores/ui";
 import { useRegionStore } from "../stores/region";
@@ -204,7 +204,9 @@ const crumbs = computed(() => [
 ]);
 const lookShown = computed(() => !goesTo.value && !bedside.value && !key.value && (props.tile.entity !== "screen.settings" || display.value === "live" || domain.value === "sensor"));
 // A card of one cell offers controls only for a type the screen lays out by its room (a cover, firmware 0.57.0).
-const controlsHere = computed(() => Boolean(catalogue.value) && (size.value !== "single" || roomControls(domain.value)));
+const controlsHere = computed(() => Boolean(catalogue.value) && (size.value !== "single" || roomHere(props.tile, panel.value)));
+// A light's presets (module light_presets): their keys right under the control that draws them, on a board that has them.
+const presetsShown = computed(() => presetsOffered(props.tile, panel.value, controls.value));
 const controlsShown = computed(() => (domain.value !== "screen" && !goesTo.value) || (controlsHere.value && !goesTo.value) || (showSlider.value && !goesTo.value));
 // What the pointer rests on is drawn on the tile before it is picked (ChoiceField does the same for its lists).
 const subSample = (kind: string) => kind === "attr" ? `attr:${subAttribute.value || "state"}` : kind === "text" ? `text:${subText.value || t("editor.tile.sub.text_placeholder")}` : kind;
@@ -345,6 +347,7 @@ const backgroundName = computed(() => inv.inventory.backgrounds?.[props.tile.opt
         <ChoiceField :choices="controlList" :value="primaryControl" :tile="tile" preview-key="controls" :sample="controlSample" :aria-label="t('editor.tile.controls.label')" @pick="pickControl" />
         <template v-if="controlNote.warn" #note><small class="help warn">{{ controlNote.text }}</small></template>
       </PropRow>
+      <PresetsSection v-if="presetsShown && controlsHere && !goesTo" :tile="tile" />
       <SwitchRow v-if="offerTilt" class="tilt-choice" :label="t('editor.tile.controls.tilt')" :description="t('editor.tile.controls.tilt_hint')"
         :model-value="tiltSelected" @update:model-value="(on) => setTileOption(tile, 'controls', withCoverTilt(primaryControl, on))" />
       <SwitchRow v-if="showSlider && !goesTo && !key" class="slider-choice" :label="t('editor.tile.slider.label')"

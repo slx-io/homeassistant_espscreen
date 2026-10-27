@@ -217,7 +217,8 @@
       "color": "Color",
       "color_temperature": "Temperatura del color",
       "brightness": "Brillo",
-      "waiting": "Esperando..."
+      "waiting": "Esperando...",
+      "presets": "Ajustes"
     },
     "effects": {
       "effect": "Efecto",
@@ -1043,7 +1044,9 @@
         },
         "light": {
           "toggle": "Interruptor",
-          "brightness": "Control deslizante de brillo"
+          "brightness": "Control deslizante de brillo",
+          "presets": "Ajustes",
+          "brightness_presets": "Control de brillo y ajustes"
         },
         "fan": {
           "toggle": "Interruptor",
@@ -2530,6 +2533,29 @@
         "room_hint": "La pantalla los dibuja donde el mosaico tiene sitio (firmware 0.57.0 o posterior): bajo el nombre en un mosaico sencillo, al lado en uno de doble ancho. Donde no caben, el mosaico se ve como sin ellos.",
         "tilt": "",
         "tilt_hint": ""
+      },
+      "presets": {
+        "label": "Ajustes",
+        "preset": "Ajuste {n}",
+        "swatch_aria": "Ajuste {n}, brillo {b} %",
+        "white": "Blanco",
+        "colour": "Color",
+        "level": "Solo brillo",
+        "white_shade": "Tono de blanco",
+        "kelvin": "{k} K",
+        "hue": "Tono",
+        "degrees": "{h}°",
+        "saturation": "Saturación",
+        "brightness": "Brillo",
+        "percent": "{n} %",
+        "use_light": "Usar el estado actual de la luz",
+        "use_light_off": "Enciende la luz para tomar su brillo y color.",
+        "add": "Añadir un ajuste",
+        "add_first": "Añadir el primer ajuste",
+        "levels": "Mostrar el brillo en los ajustes",
+        "levels_hint": "Escribe el brillo en pequeño en cada círculo. Un ajuste solo de brillo siempre lo muestra.",
+        "hint": "Un toque en un ajuste pone la luz así de una vez; el anillo marca el que muestra la luz. Haz clic en uno para cambiarlo, arrástralo para cambiar el orden.",
+        "hint_empty": "Hasta cuatro teclas redondas, como los colores favoritos de Home Assistant, cada una con su brillo. Uno nuevo parte de lo que muestra la luz ahora."
       },
       "tap": {
         "label": "Al tocar",

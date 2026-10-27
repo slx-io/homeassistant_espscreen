@@ -21,6 +21,7 @@ import { dotted, textPx } from "../model/text-fit";
 import { tallCard, type Rect, type TallText } from "../model/tall-layout";
 import { clockText as trackTime, mediaLayout, mediaMetrics, mediaTop } from "../model/media-layout";
 import { barKeys } from "../model/tall-controls";
+import { levelShown, lightNow, presetSizes, presetsOf, shown } from "../model/light-presets";
 import { bits } from "../model/catalogue";
 import theme from "virtual:esp-screens-theme";
 import { useCanvasStore } from "../stores/canvas";
@@ -106,6 +107,7 @@ export function useTileCard(props: TileCardProps) {
   const faceOf = () => tileFace({
     entity: props.tile.entity, options: props.tile.options, shape: shape.value, full: isFull(props.tile), wide: isWide(props.tile),
     live: current.value, chosen: chosenControls.value, rangeReady: rangeReady.value, bigKeys: bigKeys.value, vacuumTile: scr.currentScreen?.vacuum_tile !== false,
+    lightPresets: scr.currentScreen ? scr.currentScreen.light_presets === true : undefined,
     favorite: Boolean(favoritePlay.value), plugin: Boolean(pluginTile.value), pluginRow: Boolean(pluginRow.value), watch: Boolean(watchFace.value),
   });
 
@@ -196,6 +198,7 @@ export function useTileCard(props: TileCardProps) {
     if (c === "setpoint" || (c === "stepper" && !domain.value.endsWith("select"))) return "setpoint";
     if (c === "volume") return "volume";
     if (c === "run") return "run";
+    if (c === "presets") return "presets";
     if (c === "stepper" || f.panelKeys.length) return "keys";
     return "slider";
   });
@@ -203,7 +206,7 @@ export function useTileCard(props: TileCardProps) {
     const r = room.value, kind = panelKind.value;
     if (!r || !kind || kind === "mode") return null;
     const g = grid.value, s = doc.screenShape, cell = props.at % g.slots;
-    const keys = kind === "keys" ? (face.value.controls === "stepper" ? 2 : face.value.panelKeys.length) : 3;
+    const keys = kind === "keys" ? (face.value.controls === "stepper" ? 2 : face.value.panelKeys.length) : kind === "presets" ? presets.value.length : 3;
     const run = kind === "run" ? Math.round(texts.runText.length * look.value.label * 0.6) : 0;
     return cardPanel(s, kind, restContent(s, g.columns, shape.value.columns, cell % g.columns), r, keys, run);
   });
@@ -229,6 +232,7 @@ export function useTileCard(props: TileCardProps) {
       title: track, artist: mediaSubtitle(current.value), reading: texts.reading, now: texts.now,
       value: domain.value === "screen" || gone.value ? "" : tallValue(domain.value, current.value, texts.status, words.value), setpoint: texts.setpoint, widest: chip.value ? widestSetpoint(a) : undefined,
       runWidth: Math.ceil(textPx(texts.runText, look.value.sublabelBig, 400)),
+      presets: presets.value.length, presetCell: f.presetCell,
     });
   });
   const tallStyle = computed(() => {
@@ -248,7 +252,8 @@ export function useTileCard(props: TileCardProps) {
       panel: p && { kind: p.kind, box: { ...box(p), "--key-w": glassPx(p.keyW), "--key-h": glassPx(p.keyH), "--key-gap": glassPx(p.gap), "--icon-mini": glassPx(look.value.iconMini),
           "--key-r": glassPx(panelMetrics(doc.screenShape).radius), "--slider-r": glassPx(sliderCorner(p.keyH)),
           "--tog-w": glassPx(p.w), "--tog-h": glassPx(p.h), "--knob": glassPx(p.knob) },
-        slider: p.slider && box(p.slider), keys: p.keys && box(p.keys), standing: p.standing && box(p.standing) },
+        slider: p.slider && box(p.slider), keys: p.keys && box(p.keys), standing: p.standing && box(p.standing),
+        dots: p.dots ? presetDots(p.dots) : null },
       climate: c && { form: c.form, minus: box(c.minus), plus: box(c.plus), stepper: c.form === "row" ? box(c.stepper) : null,
         number: { ...box(c.number), fontSize: glassPx(c.faceSize), lineHeight: glassPx(c.number.h), fontWeight: String(c.faceWeight),
           "--chip-icon": glassPx(look.value.iconMini), "--chip-gap": glassPx(Math.trunc(uiScale(doc.screenShape).px(6) / 2)) },
@@ -331,9 +336,20 @@ export function useTileCard(props: TileCardProps) {
       panel: p && { left: glassPx(r.pad + p.x), top: glassPx(r.padY + p.y), width: glassPx(p.width), height: glassPx(p.height), "--key-w": glassPx(p.keyW), "--key-h": glassPx(p.keyH),
         "--key-r": glassPx(p.radius), "--key-gap": glassPx(p.gap), "--tog-w": glassPx(p.toggleW), "--tog-h": glassPx(p.toggleH), "--knob": glassPx(p.knob),
         "--slider-h": glassPx(p.sliderH), "--slider-w": glassPx(p.slider), "--icon-mini": glassPx(look.value.iconMini), "--slider-r": glassPx(sliderCorner(p.sliderH)) },
+      dots: p?.presets ? presetDots(p.presets.keys) : null,
       name: dotted(texts.name, h.title.size, h.title.weight, h.title.width),
       line: h.value ? dotted(texts.line, h.value.size, h.value.weight, h.value.width) : "" };
   });
+  // ---- A light's presets (module light_presets): round keys in their colours, the ring round the one it shows ----
+  const presets = computed(() => (domain.value === "light" ? presetsOf(props.tile.options) : []));
+  const presetLit = computed(() => shown(presets.value, lightNow(current.value)));
+  /** The keys at their places in glass pixels (model/light-presets.ts), each with its look. */
+  function presetDots(places: { x: number; y: number; size: number }[]) {
+    const z = presetSizes(doc.screenShape), levels = props.tile.options?.preset_levels === true;
+    return places.map((place, i) => ({ key: i, preset: presets.value[i], lit: i === presetLit.value, level: levelShown(presets.value[i], levels),
+      style: { left: glassPx(place.x), top: glassPx(place.y), width: glassPx(place.size), height: glassPx(place.size),
+        fontSize: glassPx(look.value.sublabel), "--ring-pad": glassPx(z.ringPad), "--ring-w": glassPx(z.ringWidth) } }));
+  }
   // The clock faces at the editor's one clock, as the screen draws them (model/clock.ts).
   const clock = computed(() => clockSample(ui.now, region.clock24, region.screenLanguage));
 
@@ -378,7 +394,7 @@ export function useTileCard(props: TileCardProps) {
     tile: computed(() => props.tile), preview: computed(() => Boolean(props.preview)), placeholder: computed(() => Boolean(props.placeholder)),
     grid, foreign, domain, shape, goesTo, current, gone, face, texts, fill, lit, on, palette, background, icon, chip, wideFit, glassScale, sliderStyle, head, panel, pill, glassStyle, tall, tallStyle, full, fullStyle,
     watchFace, watchStyle, clock, energy: energyPaints(), pluginTile, pluginRow, artwork, cameraPicture, livePaused, favoritePicture, favoriteIcon, loaded,
-    keyPlaces, chosen, live, features: computed(() => Number(current.value?.a?.supported_features || 0)),
+    keyPlaces, chosen, live, presets, presetLit, features: computed(() => Number(current.value?.a?.supported_features || 0)),
     key,
   });
 }

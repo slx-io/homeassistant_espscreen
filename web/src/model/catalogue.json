@@ -1140,6 +1140,37 @@
        }
       ]
      }
+    },
+    {
+     "key": "presets",
+     "needs": {
+      "actions": [
+       {
+        "action": "light.turn_on",
+        "field": "brightness_pct"
+       }
+      ]
+     },
+     "screen": {
+      "feature": "light_presets",
+      "else": "brightness"
+     },
+     "room": {
+      "feature": "light_presets"
+     }
+    },
+    {
+     "key": "brightness_presets",
+     "screen": {
+      "feature": "light_presets",
+      "else": "brightness"
+     },
+     "rows": 2,
+     "of": [
+      "brightness",
+      "presets"
+     ],
+     "one_row": "presets"
     }
    ],
    "inline": {

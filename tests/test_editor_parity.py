@@ -35,7 +35,8 @@ import profiles  # noqa: E402
 WEB = ROOT / 'web'
 VITE_NODE = WEB / 'node_modules/.bin/vite-node'
 WASM = WEB / 'src/wasm/firmware_preview.wasm'
-TILES = (ROOT / 'components/smart_display/runtime_tiles.h').read_text()
+# A tile's panel is compiled on its own (tile_panel.cpp): read with the header, as it was part of it.
+TILES = (ROOT / 'components/smart_display/runtime_tiles.h').read_text() + (ROOT / 'components/smart_display/tile_panel.cpp').read_text()
 
 
 def need(found, what):
@@ -138,6 +139,7 @@ import {{ cardHead, cardLook, cardPanel, cardRoom, iconFace, inkBox }} from "{mo
 import {{ climateLayout, tallAction, tallLayout }} from "{model / 'tall-layout'}";
 import {{ mediaLayout }} from "{model / 'media-layout'}";
 import {{ vacuumLayout, vacuumMetrics }} from "{model / 'vacuum-tile'}";
+import {{ hsRgb, kelvinRgb, levelShown, luminosity, presetSizes, row as presetRow, shows }} from "{model / 'light-presets'}";
 const DATA = JSON.parse(readFileSync("{Path(tmp) / 'data.json'}", "utf8"));
 {body}
 ''')
@@ -1280,6 +1282,133 @@ int main() {
         self.assertTrue(any(line.split()[15] != '-' for line in fw))
         wrong = [(c[0], c[2], c[3], c[4], c[5], t, f) for c, t, f in zip(self.cases, ts, fw) if t != f]
         self.assertEqual(wrong[:3], [], f'vacuumLayout is not vacuum_tile::plan in {len(wrong)} of {len(fw)} rooms')
+
+
+PRESETS_H = (ROOT / 'components/smart_display/module_light_presets.h').read_text()
+
+
+class LightPresets(unittest.TestCase):
+    """A light's presets (module_light_presets.h, docs/LIGHT_PRESETS.md) in model/light-presets.ts: the colour of a disc
+    (Home Assistant's temperature2rgb and hs2rgb) and its luminance, whether a disc writes its brightness, which preset a
+    light shows, the row the keys stand in, and their sizes on every board's glass."""
+
+    ROWS = [(length, across, count, wanted, least, gap) for length in range(0, 330, 13) for across in (0, 18, 30, 41, 60)
+            for count in range(0, 6) for wanted, least in ((41, 34), (28, 24), (36, 36)) for gap in (6, 10)]
+    HUES = [(h, s) for h in range(0, 361, 7) for s in range(0, 101, 5)]
+    # (level, kind: 0 a brightness alone, 1 white, 2 colour, kelvin, hue, saturation)
+    PRESETS = [(80, 1, 2700, 0, 0), (60, 2, 0, 280, 41), (30, 0, 0, 0, 0), (50, 2, 0, 2, 97), (100, 1, 6500, 0, 0)]
+    # (on, white, level, kelvin, hue, saturation)
+    LIGHTS = [(on, white, level, kelvin, hue, sat) for on in (0, 1) for white in (0, 1) for level in (29, 30, 31, 32, 59, 61, 79, 82, 100)
+              for kelvin in (2650, 2700, 2751, 6450) for hue in (0, 279, 283, 284, 358) for sat in (38, 41, 44, 100)]
+
+    TS = '''
+const preset = (p: number[]) => p[1] === 1 ? { b: p[0], k: p[2] } : p[1] === 2 ? { b: p[0], h: p[3], s: p[4] } : { b: p[0] };
+const lum = (c: number) => Math.round(luminosity(c) * 1e6);
+const kelvins: string[] = [];
+for (let k = 1000; k <= 15000; k += 50) kelvins.push(`${kelvinRgb(k)} ${lum(kelvinRgb(k))}`);
+console.log(JSON.stringify({
+  size: DATA.shapes.map((shape: any) => { const z = presetSizes(shape); return [z.tileKey, z.least, z.gap, z.ringPad, z.ring].join(" "); }),
+  row: DATA.rows.map((r: number[]) => { const o = presetRow(r[0], r[1], r[2], r[3], r[4], r[5]); return [o.count, o.size, o.gap, o.length].join(" "); }),
+  kelvin: kelvins,
+  hue: DATA.hues.map((x: number[]) => `${hsRgb(x[0], x[1])} ${lum(hsRgb(x[0], x[1]))}`),
+  level: DATA.presets.map((p: number[]) => `${Number(levelShown(preset(p), false))} ${Number(levelShown(preset(p), true))}`),
+  shows: DATA.lights.map((l: number[]) => DATA.presets.map((p: number[]) =>
+    shows(preset(p), { on: !!l[0], white: !!l[1], level: l[2], kelvin: l[3], hue: l[4], saturation: l[5] }) ? 1 : 0).join("")),
+}));'''
+
+    CPP = r'''#define LIGHT_PRESETS_TEST
+#include "components/smart_display/ui_scale.h"
+#include "components/smart_display/module_light_presets.h"
+#include <cmath>
+#include <cstdio>
+using namespace light_presets;
+@SIZES@
+struct Look { int dpi; const char *look; };
+static const Look LOOKS[] = {
+@LOOKS@
+};
+static const int ROWS[][6] = {
+@ROWS@
+};
+static const int HUES[][2] = {
+@HUES@
+};
+static const int PRESETS[][5] = {
+@PRESETS@
+};
+static const int LIGHTS[][6] = {
+@LIGHTS@
+};
+static Preset preset(const int *p) { return make(p[0], p[2], p[3], p[4], p[1] == 1, p[1] == 2); }
+static long lum(uint32_t c) { return std::lround(luminosity(c) * 1e6); }
+int main() {
+  for (const auto &l : LOOKS) { ui::configure(l.dpi, l.look); std::printf("size %d %d %d %d %d\n", tile_key(), least(), gap(), ring_pad(), ring()); }
+  for (const auto &r : ROWS) { const auto o = row(r[0], r[1], r[2], r[3], r[4], r[5]); std::printf("row %d %d %d %d\n", o.count, o.size, o.gap, o.length()); }
+  for (int k = 1000; k <= 15000; k += 50) std::printf("kelvin %u %ld\n", kelvin_rgb(k), lum(kelvin_rgb(k)));
+  for (const auto &h : HUES) std::printf("hue %u %ld\n", hs_rgb(h[0], h[1]), lum(hs_rgb(h[0], h[1])));
+  for (const auto &p : PRESETS) {
+    Presets off, on; on.levels = true; const auto x = preset(p);
+    std::printf("level %d %d\n", off.level_shown(x) ? 1 : 0, on.level_shown(x) ? 1 : 0);
+  }
+  for (const auto &l : LIGHTS) {
+    Light light; light.on = l[0]; light.white = l[1]; light.level = l[2]; light.kelvin = l[3]; light.hue = l[4]; light.saturation = l[5];
+    std::printf("shows ");
+    for (const auto &p : PRESETS) std::printf("%d", shows(preset(p), light) ? 1 : 0);
+    std::printf("\n");
+  }
+}
+'''
+
+    @classmethod
+    def setUpClass(cls):
+        compiler(), node()
+        # The keys' sizes as the module has them, cut out of it as they stand (they sit beside its LVGL drawing).
+        sizes = '\n'.join(f'static int {name}() {{ return {cut(r"inline int " + name + r"\(\) \{ return (.*?); \}", PRESETS_H, name)}; }}'
+                          for name in ('tile_key', 'least', 'gap', 'ring_pad', 'ring'))
+        table = lambda rows: ',\n'.join('{' + ','.join(map(str, r)) + '}' for r in rows)
+        with tempfile.TemporaryDirectory() as tmp:
+            cls.ts = run_ts(cls.TS, {'shapes': [shape for _, _, shape in SHAPES], 'rows': cls.ROWS, 'hues': cls.HUES,
+                                     'presets': cls.PRESETS, 'lights': cls.LIGHTS}, tmp)
+            looks = ',\n'.join('{%d, %s}' % (shape.get('dpi') or 0, json.dumps(shape.get('look') or 'standard')) for _, _, shape in SHAPES)
+            source = (cls.CPP.replace('@SIZES@', sizes).replace('@LOOKS@', looks).replace('@ROWS@', table(cls.ROWS))
+                      .replace('@HUES@', table(cls.HUES)).replace('@PRESETS@', table(cls.PRESETS)).replace('@LIGHTS@', table(cls.LIGHTS)))
+            cls.cpp = build_and_run(source, tmp)
+
+    def firmware(self, tag):
+        return [line[len(tag) + 1:] for line in self.cpp.splitlines() if line.startswith(tag + ' ')]
+
+    def same(self, tag, cases=None):
+        fw, ts = self.firmware(tag), self.ts[tag]
+        self.assertEqual(len(fw), len(ts), tag)
+        wrong = [(case, t, f) for case, t, f in zip(cases or fw, ts, fw) if t != f]
+        self.assertEqual(wrong[:3], [], f'{tag}: the editor is not module_light_presets.h in {len(wrong)} of {len(fw)} cases')
+        return fw
+
+    def test_the_keys_sizes_are_the_modules(self):
+        self.same('size', [key for key, _, _ in SHAPES])
+
+    def test_the_row_is_light_presets_row(self):
+        fw = self.same('row', self.ROWS)
+        self.assertTrue(any(line.split()[0] not in ('0', '4') for line in fw))
+
+    def test_the_colours_and_their_luminance_are_home_assistants(self):
+        # A host compiler may fuse a multiply and an add (an FMA) that the glass and the browser round apart, so a channel
+        # that lands on a half rounds one way or the other: a step of one is the same colour.
+        for tag, cases in (('kelvin', None), ('hue', self.HUES)):
+            fw, ts = self.firmware(tag), self.ts[tag]
+            self.assertEqual(len(fw), len(ts), tag)
+            def near(a, b):
+                (ca, la), (cb, lb) = map(int, a.split()), map(int, b.split())
+                return all(abs((ca >> s & 255) - (cb >> s & 255)) <= 1 for s in (0, 8, 16)) and abs(la - lb) <= 5000
+            wrong = [(case, t, f) for case, t, f in zip(cases or fw, ts, fw) if not near(t, f)]
+            self.assertEqual(wrong[:3], [], f'{tag}: the editor is not module_light_presets.h in {len(wrong)} of {len(fw)} cases')
+
+    def test_a_disc_writes_its_brightness_as_the_module_does(self):
+        self.same('level', self.PRESETS)
+
+    def test_the_preset_a_light_shows_is_light_presets_shows(self):
+        fw = self.same('shows', self.LIGHTS)
+        self.assertTrue(any('1' in line for line in fw))
 
 
 if __name__ == '__main__':

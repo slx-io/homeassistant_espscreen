@@ -4343,6 +4343,8 @@ def create_app(manager, development=False):
             screen['vacuum_tile'] = has_module(screen, 'vacuum_card')
             # The template tile (docs/TEXT_TILE.md): only a board with the module text_card draws it.
             screen['text_tiles'] = has_module(screen, text_tile.FEATURE)
+            # A light's presets (docs/LIGHT_PRESETS.md): only a board with the module light_presets draws them.
+            screen['light_presets'] = has_module(screen, 'light_presets')
             # Whether the board draws pictures (camera tiles, an alert's snapshot, an album cover): the boards with
             # memory for them say so with their camera sizes (boards.json); the firmware that draws them is a
             # separate question the editor asks by version, so an older screen still learns what an update brings.

@@ -103,6 +103,8 @@ inline std::string panel_kind(const Tile &t) {
   if(d=="cover"){if(c=="tilt")return {};if(c=="buttons_tilt")return "buttons";if(c=="position_tilt")return "position";}
   if((d=="climate"||d=="humidifier")&&c=="setpoint_mode")return "setpoint";
   if(d=="media_player"&&c=="volume_playback")return "playback";
+  // A light's presets (module light_presets): with the slider over them on a card with a second row, else the keys alone.
+  if(d=="light"&&c=="brightness_presets")return t.row_span()>1?c:"presets";
   // The small slider of a wide card is that domain's slider: the manager sends no control set beside it
   // (resolve_controls), so the kind comes from the domain.
   if (c.empty() && t.inline_control == "slider") return inline_kind(d);
@@ -1010,6 +1012,11 @@ inline bool panel_available(const Tile &t) {
   // A thermostat's modes are its mode bar (climate_bar_keys), the same one as under its -/+ (firmware 0.19.0).
   if(mode=="mode"){std::array<Key,6> keys;return thermostat(t)&&climate_bar_keys(t,keys)>0;}
   if(mode=="brightness")return domain=="light"&&light_dims(t);
+#ifdef SD_MOD_LIGHT_PRESETS
+  // A light's presets: the keys where the tile has any; with the slider over them, the slider at least.
+  if(mode=="presets")return domain=="light"&&light_dims(t)&&t.presets;
+  if(mode=="brightness_presets")return domain=="light"&&light_dims(t);
+#endif
   if(mode=="speed")return domain=="fan"&&(t.supported&feature::FAN_SPEED);
   if(mode=="position")return domain=="cover"&&(t.supported&feature::COVER_POSITION);
   if(mode=="volume")return domain=="media_player"&&(t.supported&(feature::MEDIA_VOLUME_SET|feature::MEDIA_VOLUME_MUTE));

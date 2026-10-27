@@ -217,7 +217,8 @@
       "color": "Kolor",
       "color_temperature": "Temperatura barwy",
       "brightness": "Jasność",
-      "waiting": "Czekam..."
+      "waiting": "Czekam...",
+      "presets": "Ustawienia"
     },
     "effects": {
       "effect": "Efekt",
@@ -1043,7 +1044,9 @@
         },
         "light": {
           "toggle": "Przełącznik wł./wył.",
-          "brightness": "Suwak jasności"
+          "brightness": "Suwak jasności",
+          "presets": "Ustawienia",
+          "brightness_presets": "Suwak jasności i ustawienia"
         },
         "fan": {
           "toggle": "Przełącznik wł./wył.",
@@ -2530,6 +2533,29 @@
         "room_hint": "Ekran rysuje je tam, gdzie kafelek ma na nie miejsce (firmware 0.57.0 lub nowszy): pod nazwą na pojedynczym kafelku, obok niej na podwójnej szerokości. Gdzie się nie mieszczą, kafelek wygląda jak bez nich.",
         "tilt": "",
         "tilt_hint": ""
+      },
+      "presets": {
+        "label": "Ustawienia",
+        "preset": "Ustawienie {n}",
+        "swatch_aria": "Ustawienie {n}, jasność {b}%",
+        "white": "Biel",
+        "colour": "Kolor",
+        "level": "Tylko jasność",
+        "white_shade": "Odcień bieli",
+        "kelvin": "{k} K",
+        "hue": "Barwa",
+        "degrees": "{h}°",
+        "saturation": "Nasycenie",
+        "brightness": "Jasność",
+        "percent": "{n}%",
+        "use_light": "Użyj obecnego stanu światła",
+        "use_light_off": "Włącz światło, aby przejąć jego jasność i kolor.",
+        "add": "Dodaj ustawienie",
+        "add_first": "Dodaj pierwsze ustawienie",
+        "levels": "Pokazuj jasność na ustawieniach",
+        "levels_hint": "Wpisuje jasność małą czcionką w każde koło. Ustawienie samej jasności zawsze ją pokazuje.",
+        "hint": "Dotknięcie ustawienia ustawia światło za jednym razem; pierścień oznacza to, które światło teraz pokazuje. Kliknij, aby zmienić, przeciągnij, aby zmienić kolejność.",
+        "hint_empty": "Do czterech okrągłych klawiszy, jak ulubione kolory w Home Assistant, każdy z własną jasnością. Nowe zaczyna od tego, co światło teraz pokazuje."
       },
       "tap": {
         "label": "Po dotknięciu",

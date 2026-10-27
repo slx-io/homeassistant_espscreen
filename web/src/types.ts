@@ -3,6 +3,8 @@ export type BuiltinName = "clock" | "nightstand" | "settings" | "map" | "energy"
 export const BUILTIN_CARDS: string[] = ["screen.clock", "screen.nightstand", "screen.settings", "screen.map", "screen.energy", "screen.text"];
 // A plugin tile's option as it is kept (plugin API 0.12): a text, number or toggle; a pick of a list found by searching,
 // {value, label} with the words the person saw; or a list of texts or picks (the add-on's core.plugin_options).
+// A light's preset as the tile keeps it: a brightness, and a white shade in kelvin or a colour (hue, saturation).
+export type LightPreset = { b: number; k?: number; h?: number; s?: number };
 export type PluginPick = { value: string; label: string };
 export type PluginValue = string | number | boolean | PluginPick | (string | PluginPick)[];
 export type TileOptions = {
@@ -17,6 +19,10 @@ export type TileOptions = {
   guard?: string;
   // Where a cover's slats stand open: "100" (Home Assistant's rule, never stored) or "50".
   tilt_open?: string;
+  // A light's presets (docs/LIGHT_PRESETS.md, light_presets.py): at most four, each a brightness with a white shade or a
+  // colour, and whether each disc shows its brightness (stored only when it does).
+  presets?: LightPreset[];
+  preset_levels?: boolean;
   tap?: string;
   icon?: string;
   background?: string;
@@ -106,7 +112,8 @@ export type PageTile = {
     calendarWeekStart?: string; calendarHours?: [number, number]; calendarWeekNumbers?: boolean; calendarBookOn?: string; calendarBookPlace?: string; calendarBookTitle?: string;
     // A sensor's meter (firmware 0.56.0): TileOptions' meter, min, max, segments, colors and thresholds.
     meterStyle?: string; meterMin?: number; meterMax?: number; meterSegments?: number; meterColors?: string[]; meterThresholds?: number[] };
-  interaction: { tap?: string; inline?: string; controls?: string; action?: TileOptions["action"]; guard?: string; play?: FavoritePlay; speaker?: string; shuffle?: string; repeat?: string; tilt_open?: string };
+  interaction: { tap?: string; inline?: string; controls?: string; action?: TileOptions["action"]; guard?: string; play?: FavoritePlay; speaker?: string; shuffle?: string; repeat?: string; tilt_open?: string;
+    presets?: LightPreset[]; preset_levels?: boolean };
   children?: ChildTile[];
 };
 export type Page = {
@@ -318,6 +325,8 @@ export type Screen = {
   dock?: boolean;
   // Whether its board draws the template tile (boards.json `modules` has text_card, docs/TEXT_TILE.md).
   text_tiles?: boolean;
+  // Whether its board draws a light's presets (boards.json `modules` has light_presets, docs/LIGHT_PRESETS.md).
+  light_presets?: boolean;
   /** Streams a camera live (a P4 whose hello says `live`, or such a board while it is offline): Live is a camera tile's
    * first and default pace there (app dev). */
   live_camera?: boolean;

@@ -217,7 +217,8 @@
       "color": "Szín",
       "color_temperature": "Színhőmérséklet",
       "brightness": "Fényerő",
-      "waiting": "Várakozás..."
+      "waiting": "Várakozás...",
+      "presets": "Előbeállítások"
     },
     "effects": {
       "effect": "Effekt",
@@ -1043,7 +1044,9 @@
         },
         "light": {
           "toggle": "Be/ki kapcsoló",
-          "brightness": "Fényerő-csúszka"
+          "brightness": "Fényerő-csúszka",
+          "presets": "Előbeállítások",
+          "brightness_presets": "Fényerő-csúszka és előbeállítások"
         },
         "fan": {
           "toggle": "Be/ki kapcsoló",
@@ -2530,6 +2533,29 @@
         "room_hint": "A kijelző ott rajzolja ki őket, ahol a csempén van hely (0.57.0-s vagy újabb firmware): egyes csempén a név alatt, dupla szélesen mellette. Ahol nem férnek el, a csempe úgy néz ki, mint nélkülük.",
         "tilt": "Lamella dőlése",
         "tilt_hint": "Ha van elég hely, hozzáadja a támogatott lamellacsúszkát vagy dőlésgombokat. Kisebb csempéken használd a részletes nézetet. A nyitás/zárás választásod változatlan marad."
+      },
+      "presets": {
+        "label": "Előbeállítások",
+        "preset": "{n}. előbeállítás",
+        "swatch_aria": "{n}. előbeállítás, fényerő {b}%",
+        "white": "Fehér",
+        "colour": "Szín",
+        "level": "Csak fényerő",
+        "white_shade": "Fehér árnyalat",
+        "kelvin": "{k} K",
+        "hue": "Színárnyalat",
+        "degrees": "{h}°",
+        "saturation": "Telítettség",
+        "brightness": "Fényerő",
+        "percent": "{n}%",
+        "use_light": "A lámpa jelenlegi állapotának átvétele",
+        "use_light_off": "Kapcsold be a lámpát, hogy átvehesd a fényerejét és színét.",
+        "add": "Előbeállítás hozzáadása",
+        "add_first": "Első előbeállítás hozzáadása",
+        "levels": "Fényerő mutatása az előbeállításokon",
+        "levels_hint": "Kicsiben beírja a fényerőt minden körbe. A csak fényerős előbeállítás mindig mutatja.",
+        "hint": "Egy érintés az előbeállításon egy lépésben beállítja a lámpát; a gyűrű jelöli, amelyiket a lámpa most mutatja. Kattints rá a módosításhoz, húzd a sorrend változtatásához.",
+        "hint_empty": "Legfeljebb négy kerek gomb, mint a Home Assistant kedvenc színei, mindegyik saját fényerővel. Az új abból indul, amit a lámpa most mutat."
       },
       "tap": {
         "label": "Koppintásra",

@@ -202,7 +202,9 @@
     ],
     "light": [
       "toggle",
-      "brightness"
+      "brightness",
+      "presets",
+      "brightness_presets"
     ],
     "media_player": [
       "volume",

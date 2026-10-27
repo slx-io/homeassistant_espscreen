@@ -787,6 +787,20 @@ std::string receive(const std::string &payload) {
       if (a >= 0 && b <= 24 && b - a >= 4) { tile.calendar_hours_from = (uint8_t) a; tile.calendar_hours_to = (uint8_t) b; }
     }
     tile.calendar_week_numbers = options["week_numbers"].is<bool>() && options["week_numbers"].as<bool>();
+#ifdef SD_MOD_LIGHT_PRESETS
+    // A light's presets (module light_presets): at most four, as the app keeps them; one the screen cannot take is left out.
+    tile.presets.reset();
+    if (tile.domain() == "light" && options["presets"].is<JsonArray>()) {
+      auto ps = std::make_shared<light_presets::Presets>();
+      for (JsonVariant p : options["presets"].as<JsonArray>()) {
+        if (ps->count == light_presets::MAX) break;
+        const auto preset = light_presets::make(p["b"] | 0, p["k"] | 0, p["h"] | -1, p["s"] | -1, !p["k"].isNull(), !p["h"].isNull());
+        if (preset.level) ps->items[ps->count++] = preset;
+      }
+      ps->levels = options["preset_levels"].is<bool>() && options["preset_levels"].as<bool>();
+      if (ps->count) tile.presets = ps;
+    }
+#endif
     // A sensor's meter (firmware 0.56.0, meter_card.h): a ring, a tape or a bar, its own range, one to three colours.
     tile.meter.reset();
     if (tile.display == "meter") {
@@ -812,7 +826,7 @@ std::string receive(const std::string &payload) {
     // What the second line says (firmware 0.2.90+); "auto" is the line the screen works out itself, as before.
     tile.subtitle = string(options["sub"], 96); if (tile.subtitle.empty()) tile.subtitle="auto";
     // Direct controls (0.2.19+): the manager sends only the set a wide card really shows.
-    tile.controls = string(options["controls"], 16);
+    tile.controls = string(options["controls"], 24);  // the longest, brightness_presets, is 18
     // Geometry belongs to initialization and never changes in a live value packet.
     std::string size = string(options["size"]);
     tile.full = size == "full";
@@ -1021,6 +1035,7 @@ std::string receive(const std::string &payload) {
     tile.saturation = tile.has_hs_color ? std::lround(std::clamp(saturation, 0.0f, 100.0f)) : 0;
     if (std::isfinite(hue)) tile.hue = std::lround(std::clamp(hue, 0.0f, 360.0f));
     float kelvin = number(a["color_temp_kelvin"]);
+    tile.white = std::isfinite(kelvin);
     if (std::isfinite(kelvin)) tile.kelvin = std::lround(std::clamp(kelvin, 1000.0f, 15000.0f));
     tile.min_kelvin = std::clamp(number(a["min_color_temp_kelvin"], 0), 0.0f, 15000.0f);
     tile.max_kelvin = std::clamp(number(a["max_color_temp_kelvin"], 0), 0.0f, 15000.0f);

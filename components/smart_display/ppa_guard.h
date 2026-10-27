@@ -73,20 +73,27 @@ inline Size output_of(const Block &b) {
   return turned(b.angle) ? Size{scaled(b.h, b.sy), scaled(b.w, b.sx)} : Size{scaled(b.w, b.sx), scaled(b.h, b.sy)};
 }
 
-// The engine's rule for an output of `w` x `h`: cut into more than one unit, and the last unit holds fewer bits than the
-// FIFO. That is the block the DMA never finishes unless the bypass is set.
-inline bool small_leftover(uint32_t w, uint32_t h, const Block &b) {
+// The rule for an output of `w` x `h`: cut into more than one unit, and the last unit holds fewer bits than the FIFO,
+// or, with `equal_stalls`, no more than it. That is the block the DMA never finishes unless the bypass is set.
+inline bool small_leftover(uint32_t w, uint32_t h, const Block &b, bool equal_stalls) {
   const uint32_t w_left = w % b.unit_w ? w % b.unit_w : b.unit_w;
   const uint32_t h_left = h % b.mb ? h % b.mb : b.mb;
-  return (w > b.unit_w || h > b.mb) && w_left * h_left * b.depth < FIFO_BITS;
+  const uint32_t bits = w_left * h_left * b.depth;
+  return (w > b.unit_w || h > b.mb) && (bits < FIFO_BITS || (equal_stalls && bits == FIFO_BITS));
 }
-// What the hardware does: the rule on the output as it comes out, turned (Espressif's fix, 469aa16).
+// What the hardware does: the rule on the output as it comes out, turned (Espressif's fix, 469aa16), and a last unit
+// of exactly the FIFO stalls too. Espressif's driver counts that one safe, master as much as 5.5.5, but a reTerminal
+// D1001 (2026-10-27) restarted on it twice while its top bar was held: the line growing along the glass's edge is a
+// 6-row strip, turned a 6-pixel-wide column of units of 6 x 16 x 16 bits, and the copies of 336x6 whole and of 864x6
+// (a piece of 872x6) never came back while the panel read its frame buffer (the main loop waiting in ppa_do_operation,
+// the guard's trace of the last calls naming the copy). Most such copies did come back, as in espressif/esp-idf #19096.
 inline bool stalls(const Block &b) {
   const Size out = output_of(b);
-  return small_leftover(out.w, out.h, b);
+  return small_leftover(out.w, out.h, b, true);
 }
-// What ESP-IDF 5.5.5's driver does: the rule on the input's own width and height, each with its own scale, turned or not.
-inline bool driver_bypasses(const Block &b) { return small_leftover(scaled(b.w, b.sx), scaled(b.h, b.sy), b); }
+// What ESP-IDF 5.5.5's driver does: the rule on the input's own width and height, each with its own scale, turned or
+// not, and strictly fewer bits than the FIFO.
+inline bool driver_bypasses(const Block &b) { return small_leftover(scaled(b.w, b.sx), scaled(b.h, b.sy), b, false); }
 // A block the engine takes whole: nothing to stall on, or the driver sets the bypass anyway.
 inline bool safe(const Block &b) { return !stalls(b) || driver_bypasses(b); }
 

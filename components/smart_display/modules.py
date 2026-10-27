@@ -29,6 +29,8 @@ MODULES = {
     "doorbell": {"min_tier": "full", "define": "SD_MOD_DOORBELL"},
     # The template tile: a text Home Assistant renders from a template, as rows the app sends; lite is not offered it.
     "text_card": {"min_tier": "full", "define": "SD_MOD_TEXT_CARD"},
+    # A light's presets: round keys on its tile and its card that set a colour and a brightness; lite draws the slider.
+    "light_presets": {"min_tier": "full", "define": "SD_MOD_LIGHT_PRESETS"},
 }
 
 

@@ -217,7 +217,8 @@
       "color": "Kleur",
       "color_temperature": "Kleurtemperatuur",
       "brightness": "Helderheid",
-      "waiting": "Wachten..."
+      "waiting": "Wachten...",
+      "presets": "Presets"
     },
     "effects": {
       "effect": "Effect",
@@ -1043,7 +1044,9 @@
         },
         "light": {
           "toggle": "Aan/uit-schakelaar",
-          "brightness": "Helderheidsslider"
+          "brightness": "Helderheidsslider",
+          "presets": "Presets",
+          "brightness_presets": "Helderheidsslider en presets"
         },
         "fan": {
           "toggle": "Aan/uit-schakelaar",
@@ -2101,6 +2104,29 @@
         "room_hint": "Het scherm tekent ze waar de tegel er ruimte voor heeft (firmware 0.57.0 of nieuwer): onder de naam op een enkele tegel, ernaast op een dubbelbrede. Waar ze niet passen, ziet de tegel eruit zoals zonder.",
         "tilt": "Lamellenbediening",
         "tilt_hint": "Voegt de ondersteunde lamellenschuif of kantelknoppen toe als er genoeg ruimte is. Gebruik op kleinere tegels de detailweergave. Je keuze voor open/dicht blijft behouden."
+      },
+      "presets": {
+        "label": "Presets",
+        "preset": "Preset {n}",
+        "swatch_aria": "Preset {n}, helderheid {b}%",
+        "white": "Wit",
+        "colour": "Kleur",
+        "level": "Alleen helderheid",
+        "white_shade": "Witte tint",
+        "kelvin": "{k} K",
+        "hue": "Tint",
+        "degrees": "{h}°",
+        "saturation": "Verzadiging",
+        "brightness": "Helderheid",
+        "percent": "{n}%",
+        "use_light": "Huidige stand van de lamp gebruiken",
+        "use_light_off": "Zet de lamp aan om zijn helderheid en kleur over te nemen.",
+        "add": "Preset toevoegen",
+        "add_first": "Eerste preset toevoegen",
+        "levels": "Helderheid op presets tonen",
+        "levels_hint": "Zet de helderheid klein in elke cirkel. Een preset met alleen helderheid toont die altijd.",
+        "hint": "Een tik op een preset zet de lamp er in één keer op; de ring toont welke de lamp nu heeft. Klik er een aan om hem te wijzigen, sleep om de volgorde te veranderen.",
+        "hint_empty": "Tot vier ronde knoppen, zoals de favoriete kleuren in Home Assistant, elk met een eigen helderheid. Een nieuwe begint bij wat de lamp nu toont."
       },
       "tap": {
         "label": "Bij aantikken",
